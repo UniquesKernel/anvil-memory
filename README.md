@@ -1,2 +1,2 @@
-# Template-C-Project
-Template Project Repository for C development
+# Anvil-Memory
+Anvil's memory management library.
