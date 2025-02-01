@@ -1,0 +1,80 @@
+---
+# Basics
+BasedOnStyle: LLVM
+UseTab: ForIndentation
+
+# Indentation and Line Length
+IndentWidth: 8
+TabWidth: 8
+ColumnLimit: 80
+MaxEmptyLinesToKeep: 1
+
+# Alignment Settings
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+  AlignCompound: true
+  PadOperators: false
+
+AlignConsecutiveDeclarations:
+  Enabled: false
+  AcrossEmptyLines: true
+  AcrossComments: true
+  AlignFunctionPointers: true
+
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: false
+
+AlignConsecutiveShortCaseStatements:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+  AlignCaseColons: true
+  AlignCaseArrows: true
+
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 2
+
+# Function and Expression Formatting
+AllowShortCaseExpressionOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+
+# Brace Wrapping
+BreakBeforeBraces: Linux
+BraceWrapping:
+  AfterFunction: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeElse: false
+  IndentBraces: false
+
+# Spacing
+SpaceBeforeParens: Never
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpacesInContainerLiterals: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 8
+SpaceAfterLogicalNot: false
+
+# Function Parameters
+BinPackParameters: true
+BinPackArguments: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AlwaysBreakAfterReturnType: None
+PenaltyReturnTypeOnItsOwnLine: 1000
+
+# Pointer Alignment
+DerivePointerAlignment: false
+PointerAlignment: Right
+
+CommentPragmas: '///'

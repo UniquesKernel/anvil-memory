@@ -1,0 +1,11 @@
+{
+  "include": ["tests/python"],
+  "executionEnvironments": [
+    {
+      "root": "tests/python",
+      "pythonPath": "venv/bin/python",
+      "pythonVersion": "3.x"
+    }
+  ],
+  "typeCheckingMode": "basic"
+}
