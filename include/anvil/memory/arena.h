@@ -1,0 +1,122 @@
+#ifndef ANVIL_MEMORY_ARENA_H
+#define ANVIL_MEMORY_ARENA_H
+
+#include <stddef.h>
+#include <stdint.h>
+
+typedef struct memory_arena_t MemoryArena;
+
+typedef enum allocator_type_t {
+	LINEAR = 0,    ///< Linear allocation strategy.
+	COUNT          ///< Total count of allocators.
+} AllocatorType;
+
+typedef enum error_code_t {
+	ARENA_ERROR_NONE = 0,                  ///< Indicates no errors.
+	ARENA_ERROR_ALLOC_OUT_OF_MEMORY = 1    ///< Indicates the arena ran out of memory during an operation.
+} ArenaErrorCode;
+
+/**
+ * @brief Creates a memory arena with the specified capacity and alignment
+ *
+ * This function allocates and initializes a new memory arena. The arena uses the specified
+ * allocation strategy and ensures all allocations are aligned to the given boundary.
+ *
+ * The function will CRASH (not return an error) if any of these invariants are violated:
+ * - alignment must be a power of two
+ * - capacity must be greater than 0
+ * - allocator_type must be a valid allocator (not COUNT)
+ * - allocation of internal structures must succeed
+ *
+ * The function returns an error code ONLY for recoverable external failures.
+ *
+ * @param[out] arena         Pointer to receive the created arena
+ * @param[in] allocator_type Allocation strategy (LINEAR, etc). Must not be COUNT.
+ * @param[in] alignment      Memory alignment in bytes. Must be a power of 2.
+ * @param[in] capacity       Initial arena size in bytes. Must be > 0.
+ *
+ * @return ARENA_ERROR_NONE on success, other codes only for external/runtime failures
+ *
+ * @note This function follows fail-fast design - programmer errors trigger immediate
+ *       crashes with diagnostics rather than returning error codes
+ *
+ * @note The memory arenas created from this function are **NOT** thread safe and should not be used
+ * in a cocurrent environment.
+ */
+ArenaErrorCode memory_arena_create(MemoryArena **arena, const AllocatorType allocator_type, const size_t alignment,
+                                   size_t capacity);
+
+/**
+ * @brief Destroys a memory arena and free all memory allocated to it.
+ *
+ * This function destroys an arena and frees all memory associated with it. All functions
+ * associated with the arena should be set to NULL after the arena is destroyed to avoid
+ * use after free.
+ *
+ * The function will CRASH (not return an error) if its invariants are violated:
+ * - arena is NULL.
+ * - arena memory block is null.
+ * - failed to free arena.
+ *
+ * The function returns an error code ONLY for recoverable external failures.
+ *
+ * @param[out] arena	Pointer to the arena to destroy.
+ *
+ * @returns ARENA_ERROR_NONE on success, other codes only for external/runtime failures
+ *
+ * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
+ *       diagnostics rather than returning error codes.
+ */
+ArenaErrorCode memory_arena_destroy(MemoryArena **const arena);
+
+/**
+ * @brief Resets a memory arena allowing its current memory to be overriden.
+ *
+ * This function resets the given memory arena allowing all memory allocated from it
+ * to be overriden. While use after free is not a concern - pointers allocated
+ * from the arena before reseting the arena should be considered tainted and set to
+ * NULL to avoid reading garbage values.
+ *
+ * The function will CRASH (not return an error) if its invariants are violated:
+ * - arena is NULL.
+ * - arena memory block is null.
+ * - fails to properly reset the arena.
+ *
+ * The function returns an error code ONLY for recoverable external failures.
+ *
+ * @param[out] arena	Pointer to the arena to reset.
+ *
+ * @returns ARENA_ERROR_NONE on success, other codes only for external/runtime failures
+ *
+ * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
+ *       diagnostics rather than returning error codes.
+ */
+ArenaErrorCode memory_arena_reset(MemoryArena **const arena);
+
+/**
+ * @brief allocates an amount of memory equivalent to size and write it to `result`
+ *
+ * This function will allocate an amount of memory equal to `size`, padded to the
+ * arena's alignment. It will write the resulting memory to the `result` pointer.
+ *
+ * The function will CRASH (not return an error) if its invariants are violated:
+ * - arena is NULL.
+ * - arena's memory block is null.
+ * - result pointer is NULL.
+ *
+ * The function returns the following error code if the error is recoverable:
+ * - If the arena runs out of memory it will return ARENA_ERROR_ALLOC_OUT_OF_MEMORY.
+ *
+ * @param[out] arena	Pointer to the arena to reset.
+ * @param[in]  size	amount of memory to allocate.
+ * @param[out] result	pointer the allocation should be written to.
+ *
+ * @returns ARENA_ERROR_NONE on success, other codes only for external/runtime failures
+ *
+ * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
+ *       diagnostics rather than returning error codes.
+ * @note This function is **NOT** thread safe and shouldn't be used in a concurrent context.
+ */
+ArenaErrorCode memory_arena_alloc(MemoryArena **const arena, const size_t size, void **result);
+
+#endif    // !ANVIL_MEMORY_ARENA_H

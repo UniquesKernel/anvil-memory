@@ -1,6 +1,6 @@
 # Configuration variables
 BUILD_DIR = build
-PROJECT = project
+PROJECT = memory
 VERSION ?= 0.1.0
 
 # Installation paths
@@ -68,7 +68,7 @@ test: build-test
 
 test-memcheck: build-test
 	. ./venv/bin/activate && \
-	PYTHONPATH=./tests/python valgrind --leak-check=full \
+	PYTHONPATH=./tests/python valgrind --suppressions=./valgrind-tools/python.supp --leak-check=full \
 		--show-leak-kinds=all \
 		--track-origins=yes \
 		python -m pytest ./tests/python

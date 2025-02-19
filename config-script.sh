@@ -1,5 +1,7 @@
 #!/bin/bash
 
+local project = $1
+
 # Create main project directories
 mkdir -p {src/{core,asm},tests/python,include}
 
@@ -23,7 +25,7 @@ touch include/.gitkeep
 mkdir -p ./docs
 
 # Create example header with Doxygen documentation
-cat >include/example.h <<'EOL'
+cat >include/anvil/${project}/example.h <<'EOL'
 /**
  * @file example.h
  * @brief Example header file with Doxygen documentation

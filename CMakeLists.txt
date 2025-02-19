@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(project VERSION 0.1.0 
+project(memory VERSION 0.1.0 
   LANGUAGES ASM C
   DESCRIPTION "A template project for C libraries"
 )
@@ -97,6 +97,7 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
   target_compile_options(${PROJECT_NAME}_test PRIVATE
     -O0
     -g3
+    -fPIC
   )
 endif()
 
