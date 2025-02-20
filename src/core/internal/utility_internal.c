@@ -8,12 +8,14 @@ void log_and_crash(const char *expr, const char *file, int line, const char *msg
 	char time_buf[20];
 	strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", tm_info);
 
+#ifdef LOG_FILE
 	// Log the error to the file
 	FILE *log = fopen(LOG_FILE, "a");    // Open log file in append mode
 	if (log) {
 		fprintf(log, "[%s] ASSERT_CRASH failed: %s at %s:%d\nMessage: %s\n\n", time_buf, expr, file, line, msg);
 		fclose(log);
 	}
+#endif /* ifdef LOG_FILE */
 
 	// Print the error to stderr
 	fprintf(stderr, "ASSERT_CRASH failed: %s at %s:%d\nMessage: %s\n", expr, file, line, msg);

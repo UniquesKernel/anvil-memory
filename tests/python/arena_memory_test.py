@@ -1,16 +1,18 @@
-from ast import AugLoad
 import ctypes
-from inspect import _void
-from os import supports_effective_ids
-import re
-from hypothesis import given, target
+from hypothesis import assume
+from hypothesis.internal.compat import floor
 from hypothesis.stateful import RuleBasedStateMachine, precondition, rule
 from enum import IntEnum
 
-from hypothesis.strategies import integers, lists, one_of, recursive, sampled_from 
-
+from hypothesis.strategies import integers
+import os
+import signal
 lib = ctypes.CDLL("./build/libmemory_test.so")
 
+"""
+Memory Arena, AllocatorType, ArenaErrorCode and 
+function bindings for Memory arena and linear allocator
+"""
 class MemoryArena(ctypes.Structure):
     pass
 
@@ -42,23 +44,49 @@ lib.memory_arena_alloc.argtypes = [
     ctypes.POINTER(ctypes.c_void_p)
 ]
 
+
+"""
+Checking for system alignment requirement for most common architectures 
+that anvil supports this will come down to long double or double.
+"""
+if hasattr(ctypes, 'c_longdouble'):
+    max_align_type = ctypes.c_longdouble
+else:
+    max_align_type = ctypes.c_double
+
+SIZE = ctypes.sizeof(ctypes.c_longdouble)
+
 class MemoryArenaModel(RuleBasedStateMachine):
+    """
+    Memory Arena Model: models a memory arena as a graph of user api calls 
+    to see if the model and the implementation agrees.
+    """
     def __init__(self):
         super().__init__()
         self.arena = ctypes.pointer(ctypes.POINTER(MemoryArena)())
         self.err = ArenaErrorCode.ARENA_ERROR_NONE
 
+    """
+    Only create an arena if non exists. Only generate alignments 
+    that are powers of two and larger than or equal to the minimum
+    system architecture alignment.
+    """
     @rule(
-        alignment=sampled_from([8,16,32,64,128]),
+        exponent=integers(min_value=(floor(SIZE/2)) + 1, max_value=10),
         capacity=integers(min_value=1, max_value=1024)
     )
     @precondition(lambda self: not self.arena.contents)
-    def create_arena(self, capacity, alignment):
+    def create_arena(self, capacity, exponent):
+        alignment = (1 << exponent) 
+        assume(alignment >= SIZE)
         self.err = lib.memory_arena_create(self.arena, AllocatorType.LINEAR, alignment, capacity)
 
         assert self.arena.contents
         assert self.err == ArenaErrorCode.ARENA_ERROR_NONE
 
+    """
+    Only destroy arena if one exists.
+    """
     @rule()
     @precondition(lambda self: self.arena.contents)
     def arena_destroy(self):
@@ -68,6 +96,21 @@ class MemoryArenaModel(RuleBasedStateMachine):
         assert not self.arena.contents
         assert self.err == ArenaErrorCode.ARENA_ERROR_NONE
 
+    """
+    Only reset arena if one exists.
+    """
+    @rule()
+    @precondition(lambda self: self.arena.contents)
+    def arena_reset(self):
+        self.err = lib.memory_arena_reset(self.arena)
+
+        assert self.err == ArenaErrorCode.ARENA_ERROR_NONE
+
+    """
+    Only allocate memory from arena if it exists and we haven't 
+    gottent a memory arena out of memory error code from an earlier 
+    allocation attempt. This is to avoid useless repeat allocations
+    """
     @rule(allocSize=integers(1,1024))
     @precondition(lambda self: self.arena.contents and self.err != ArenaErrorCode.ARENA_ERROR_ALLOC_OUT_OF_MEMORY)
     def alloc(self, allocSize):
@@ -77,6 +120,9 @@ class MemoryArenaModel(RuleBasedStateMachine):
         assert self.err == ArenaErrorCode.ARENA_ERROR_ALLOC_OUT_OF_MEMORY or self.err == ArenaErrorCode.ARENA_ERROR_NONE
         assert arena_ptr
 
+    """
+    Ensure the arena is and all allocated memory is destroyed at the end of the test.
+    """
     def teardown(self):
         if (self.arena.contents):
             lib.memory_arena_destroy(self.arena)

@@ -1,13 +1,12 @@
 #ifndef ANVIL_MEMORY_UTILITY_INTERNAL_H
 #define ANVIL_MEMORY_UTILITY_INTERNAL_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/cdefs.h>
 #include <time.h>
-
-#define LOG_FILE "/tmp/assert_crash.log"    // Log file path
 
 // Macro that calls the helper function
 #define ASSERT_CRASH(expr, msg)                                                                                        \

@@ -32,7 +32,7 @@ build:
 
 build-test:
 	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) -DBUILD_TESTING=ON .. && make
+	@cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) -DBUILD_TESTING=ON -DLOG_FILE=ON .. && make
 
 # Installation targets
 .PHONY: install install-dev
@@ -68,7 +68,7 @@ test: build-test
 
 test-memcheck: build-test
 	. ./venv/bin/activate && \
-	PYTHONPATH=./tests/python valgrind --suppressions=./valgrind-tools/python.supp --leak-check=full \
+	PYTHONPATH=./tests/python valgrind --leak-check=full \
 		--show-leak-kinds=all \
 		--track-origins=yes \
 		python -m pytest ./tests/python

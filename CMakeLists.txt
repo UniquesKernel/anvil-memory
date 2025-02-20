@@ -99,6 +99,9 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
     -g3
     -fPIC
   )
+
+  target_compile_definitions(${PROJECT_NAME}_test PRIVATE BUILD_TESTING)
+  target_compile_definitions(${PROJECT_NAME}_test PRIVATE LOG_FILE="/tmp/assert_crash.log")
 endif()
 
 # Create symlink for compile_commands.json in project root
