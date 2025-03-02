@@ -1,4 +1,5 @@
 #include <../include/anvil/memory/internal/utility_internal.h>
+#include <sys/cdefs.h>
 
 // Function to log assertion failures and crash
 void log_and_crash(const char *expr, const char *file, int line, const char *msg) {
@@ -24,7 +25,7 @@ void log_and_crash(const char *expr, const char *file, int line, const char *msg
 	abort();
 }
 
-bool is_power_of_two(const size_t x) {
+__attribute_pure__ bool is_power_of_two(const size_t x) {
 	return (x != 0) && ((x & (x - 1)) == 0);
 }
 

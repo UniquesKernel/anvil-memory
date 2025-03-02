@@ -3,12 +3,14 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/cdefs.h>
 
 typedef struct memory_arena_t MemoryArena;
 
 typedef enum allocator_type_t {
-	LINEAR = 0,    ///< Linear allocation strategy.
-	COUNT          ///< Total count of allocators.
+	LINEAR_STATIC = 0,     ///< Linear static allocation strategy.
+	LINEAR_DYNAMIC = 1,    ///< Linear dynamic allocation strategy.
+	COUNT                  ///< Total count of allocators.
 } AllocatorType;
 
 typedef enum error_code_t {
@@ -94,7 +96,7 @@ ArenaErrorCode memory_arena_destroy(MemoryArena **const arena);
 ArenaErrorCode memory_arena_reset(MemoryArena **const arena);
 
 /**
- * @brief allocates an amount of memory equivalent to size and write it to `result`
+ * @brief Allocates an amount of memory equivalent to size and write it to `result`
  *
  * This function will allocate an amount of memory equal to `size`, padded to the
  * arena's alignment. It will write the resulting memory to the `result` pointer.
@@ -119,4 +121,22 @@ ArenaErrorCode memory_arena_reset(MemoryArena **const arena);
  */
 ArenaErrorCode memory_arena_alloc(MemoryArena **const arena, const size_t size, void **result);
 
+/**
+ * @brief Evaluates if a memory arena has enough memory for an allocation
+ *
+ * This function will evaluate if an allocation `size` can fit in a memory arena.
+ * It will return a boolean, true if the allocation can fit and false otherwise.
+ *
+ * The function will CRASH (not return an error) if its invariants are violated:
+ * - arena is NULL.
+ *
+ * @param[in] arena to test allocation against.
+ * @param[in] size of the test allocation.
+ *
+ * @return boolean value asserting if an allocation would succeed or not.
+ *
+ * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
+ *       diagnostics rather than returning error codes.
+ */
+bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size) __attribute_pure__;
 #endif    // !ANVIL_MEMORY_ARENA_H

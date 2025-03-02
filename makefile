@@ -28,11 +28,11 @@ all: build
 .PHONY: build build-test
 build:
 	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) -DBUILD_TESTING=OFF .. && make
+	@cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) -DBUILD_TESTING=OFF -DENABLE_ASAN=OFF -DENABLE_UBSAN=OFF .. && make
 
 build-test:
 	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) -DBUILD_TESTING=ON -DLOG_FILE=ON .. && make
+	@cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) -DBUILD_TESTING=ON -DENABLE_ASAN=ON -DENABLE_UBSAN=ON -DLOG_FILE=ON .. && make
 
 # Installation targets
 .PHONY: install install-dev
@@ -63,12 +63,12 @@ package: build
 # Testing targets
 .PHONY: test test-memcheck
 test: build-test
-	PYTHONPATH=./tests/python ./venv/bin/python3 -m pytest \
+	PYTHONPATH=./tests/python ASAN_OPTIONS=verify_asan_link_order=0 ./venv/bin/python3 -m pytest \
 		--hypothesis-show-statistics ./tests/python
 
 test-memcheck: build-test
 	. ./venv/bin/activate && \
-	PYTHONPATH=./tests/python valgrind --leak-check=full \
+	PYTHONPATH=./tests/python ASAN_OPTIONS=verify_asan_link_order=0 valgrind --leak-check=full \
 		--show-leak-kinds=all \
 		--track-origins=yes \
 		python -m pytest ./tests/python

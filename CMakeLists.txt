@@ -6,6 +6,9 @@ project(memory VERSION 0.1.0
 )
 
 option(BUILD_TESTING "Testing build" ON)
+option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
+option(ENABLE_UBSAN "Enable Undefined Behavior Sanitizer" OFF)
+option(ENABLE_TSAN "Enable Thread Sanitizer" OFF)
 
 # Set C standard and flags
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")

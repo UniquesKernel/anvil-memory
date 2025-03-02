@@ -1,5 +1,5 @@
 #include <anvil/memory/arena.h>
-#include <anvil/memory/internal/allocator_internal.h>
+#include <anvil/memory/internal/allocators/linear_allocator_internal.h>
 #include <anvil/memory/internal/arena_internal.h>
 #include <anvil/memory/internal/utility_internal.h>
 #include <assert.h>
@@ -33,10 +33,17 @@ ArenaErrorCode memory_arena_create(MemoryArena **arena_internal, const Allocator
 	    safe_malloc(arena->memory_block->capacity, alignment, "The allocated memory cannot be NULL");
 
 	switch (type) {
-		case LINEAR:
-			arena->allocator.free_fptr = linear_free;
-			arena->allocator.alloc_fptr = linear_alloc;
-			arena->allocator.reset_fptr = linear_reset;
+		case LINEAR_STATIC:
+			arena->allocator.free_fptr = linear_static_free;
+			arena->allocator.alloc_fptr = linear_static_alloc;
+			arena->allocator.reset_fptr = linear_static_reset;
+			arena->allocator.alloc_verify_fptr = linear_static_alloc_verify;
+			break;
+		case LINEAR_DYNAMIC:
+			arena->allocator.free_fptr = linear_dynamic_free;
+			arena->allocator.reset_fptr = linear_dynamic_reset;
+			arena->allocator.alloc_fptr = linear_dynamic_alloc;
+			arena->allocator.alloc_verify_fptr = linear_dynamic_alloc_verify;
 			break;
 		default:
 			ASSERT_CRASH(0, "Invalid allocator type encountered");
@@ -48,6 +55,7 @@ ArenaErrorCode memory_arena_create(MemoryArena **arena_internal, const Allocator
 	assert(arena->allocator.free_fptr && "Should never have a null pointer free function");
 	assert(arena->allocator.alloc_fptr && "Should never have a null pointer alloc function");
 	assert(arena->allocator.reset_fptr && "Should never have a null pointer reset function");
+	assert(arena->allocator.alloc_verify_fptr && "Should never have a null pointer verify function");
 
 	*arena_internal = arena;
 	return error_code;
@@ -87,4 +95,11 @@ ArenaErrorCode memory_arena_alloc(MemoryArena **const arena, const size_t size, 
 
 	*result = internal_ptr;
 	return error_code;
+}
+
+bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size) {
+	ASSERT_CRASH(arena, "Cannot verify a null pointer arena");
+	ASSERT_CRASH(arena->memory_block, "Cannot verify if a null memory_block can contain memory allocation");
+
+	return arena->allocator.alloc_verify_fptr(arena->memory_block, size, arena->alignment);
 }

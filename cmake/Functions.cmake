@@ -20,6 +20,22 @@ function(set_compiler_options project_name)
     list(APPEND COMPILER_FLAGS -march=native)
   endif()
 
+   # Add sanitizer flags if enabled
+  if(ENABLE_ASAN)
+    list(APPEND COMPILER_FLAGS -fsanitize=address -fno-omit-frame-pointer)
+    target_link_options(${project_name} PRIVATE -fsanitize=address)
+  endif()
+
+  if(ENABLE_UBSAN)
+    list(APPEND COMPILER_FLAGS -fsanitize=undefined)
+    target_link_options(${project_name} PRIVATE -fsanitize=undefined)
+  endif()
+
+  if(ENABLE_TSAN)
+    list(APPEND COMPILER_FLAGS -fsanitize=thread)
+    target_link_options(${project_name} PRIVATE -fsanitize=thread)
+  endif()
+
   target_compile_options(${project_name} PRIVATE
     ${COMPILER_FLAGS}
   )

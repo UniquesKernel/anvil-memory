@@ -1,12 +1,9 @@
 import ctypes
-from hypothesis import assume
-from hypothesis.internal.compat import floor
+import hypothesis
 from hypothesis.stateful import RuleBasedStateMachine, precondition, rule
 from enum import IntEnum
 
-from hypothesis.strategies import integers
-import os
-import signal
+from hypothesis.strategies import integers, sampled_from
 lib = ctypes.CDLL("./build/libmemory_test.so")
 
 """
@@ -17,8 +14,9 @@ class MemoryArena(ctypes.Structure):
     pass
 
 class AllocatorType(IntEnum):
-    LINEAR = 0
-    COUNT = 1
+    LINEAR_STATIC = 0
+    LINEAR_DYNAMIC = 1
+    # COUNT = 2
 
 class ArenaErrorCode(IntEnum):
     ARENA_ERROR_NONE = 0
@@ -43,7 +41,10 @@ lib.memory_arena_alloc.argtypes = [
     ctypes.c_size_t,
     ctypes.POINTER(ctypes.c_void_p)
 ]
+lib.memory_arena_alloc.restype = ArenaErrorCode
 
+lib.memory_arena_alloc_verify.argtypes = [ctypes.POINTER(MemoryArena), ctypes.c_size_t]
+lib.memory_arena_alloc_verify.restype = ctypes.c_bool
 
 """
 Checking for system alignment requirement for most common architectures 
@@ -56,6 +57,7 @@ else:
 
 SIZE = ctypes.sizeof(ctypes.c_longdouble)
 
+@hypothesis.settings(max_examples=1000)
 class MemoryArenaModel(RuleBasedStateMachine):
     """
     Memory Arena Model: models a memory arena as a graph of user api calls 
@@ -72,14 +74,14 @@ class MemoryArenaModel(RuleBasedStateMachine):
     system architecture alignment.
     """
     @rule(
-        exponent=integers(min_value=(floor(SIZE/2)) + 1, max_value=10),
-        capacity=integers(min_value=1, max_value=1024)
+        exponent=integers(min_value=0,max_value=10),
+        capacity=integers(min_value=1, max_value=1024),
+        allocatorType=sampled_from(AllocatorType)
     )
     @precondition(lambda self: not self.arena.contents)
-    def create_arena(self, capacity, exponent):
-        alignment = (1 << exponent) 
-        assume(alignment >= SIZE)
-        self.err = lib.memory_arena_create(self.arena, AllocatorType.LINEAR, alignment, capacity)
+    def create_arena(self, capacity, exponent, allocatorType):
+        alignment = (SIZE << exponent)
+        self.err = lib.memory_arena_create(self.arena, allocatorType, alignment, capacity)
 
         assert self.arena.contents
         assert self.err == ArenaErrorCode.ARENA_ERROR_NONE
@@ -119,6 +121,25 @@ class MemoryArenaModel(RuleBasedStateMachine):
 
         assert self.err == ArenaErrorCode.ARENA_ERROR_ALLOC_OUT_OF_MEMORY or self.err == ArenaErrorCode.ARENA_ERROR_NONE
         assert arena_ptr
+
+    """
+    Allocation verifier should be able to predict if a memory arena allocation will fail or 
+    succeed and the correct error code in each case.
+    """
+    @rule(allocSize=integers(1,1024))
+    @precondition(lambda self: self.arena.contents)
+    def alloc_verify(self, allocSize):
+        arena_ptr = ctypes.POINTER(ctypes.c_void_p)(ctypes.c_void_p(allocSize))
+        canAlloc = lib.memory_arena_alloc_verify(self.arena.contents, allocSize)
+        self.err = lib.memory_arena_alloc(self.arena, allocSize, arena_ptr)
+
+        if canAlloc == True:
+            assert self.err == ArenaErrorCode.ARENA_ERROR_NONE
+            assert arena_ptr.contents
+        else:
+            assert self.err == ArenaErrorCode.ARENA_ERROR_ALLOC_OUT_OF_MEMORY
+            assert not arena_ptr.contents
+
 
     """
     Ensure the arena is and all allocated memory is destroyed at the end of the test.

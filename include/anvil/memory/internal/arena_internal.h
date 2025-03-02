@@ -42,20 +42,22 @@ static_assert(_Alignof(MemoryBlock) == _Alignof(void *), "MemoryBlock alignment 
  * - Reset can be set as a no ops function if it is not meant to be used, but it is still never
  * null.
  *
- * Fields	| Type		| Size
- * ---		| ---		| ---
- * alloc_fptr	| Pointer	| 4 or 8 Bytes
- * free_fptr	| Pointer	| 4 or 8 Bytes
- * reset_fptr	| Pointer	| 4 or 8 Bytes
+ * Fields		| Type		| Size
+ * ---			| ---		| ---
+ * alloc_fptr		| Pointer	| 4 or 8 Bytes
+ * free_fptr		| Pointer	| 4 or 8 Bytes
+ * reset_fptr		| Pointer	| 4 or 8 Bytes
+ * alloc_verify_fptr	| Pointer	| 4 or 8 Bytes
  */
 typedef struct memory_allocator_t {
 	ArenaErrorCode (*alloc_fptr)(MemoryBlock *const memory, const size_t allocation_size, const size_t alignment,
 	                             void **ptr);
 	ArenaErrorCode (*free_fptr)(MemoryBlock *const memory);
 	ArenaErrorCode (*reset_fptr)(MemoryBlock *const memory);
+	bool (*alloc_verify_fptr)(MemoryBlock *const memory, const size_t allocation_size, const size_t alignment);
 } Allocator;
 
-static_assert(sizeof(Allocator) == 12 || sizeof(Allocator) == 24, "Allocator must be either 12 or 24 bytes");
+static_assert(sizeof(Allocator) == 16 || sizeof(Allocator) == 32, "Allocator must be either 16 or 32 bytes");
 static_assert(_Alignof(Allocator) == _Alignof(void *), "Allocator alignment must match pointer alignment");
 
 /**
@@ -84,8 +86,8 @@ typedef struct memory_arena_t {
 	size_t alignment;
 } MemoryArena;
 
-static_assert(sizeof(MemoryArena) == 20 || sizeof(MemoryArena) == 40,
-              "Memory arena is either 20 or 40 bytes depending on architecture");
+static_assert(sizeof(MemoryArena) == 24 || sizeof(MemoryArena) == 48,
+              "Memory arena is either 24 or 48 bytes depending on architecture");
 static_assert(_Alignof(MemoryArena) == _Alignof(void *),
               "Alignment of MemoryArena must match the alignment of the allocator");
 #endif    // ANVIL_MEMORY_ARENA_INTERNAL_H
