@@ -42,10 +42,5 @@ void *safe_malloc(const size_t size, const size_t alignment, const char *error_m
 		log_and_crash("posix_memalign", __FILE__, __LINE__, error_msg);    // Custom error logging
 	}
 
-// Optional: Poison memory for debug builds to catch uninitialized use
-#ifdef DEBUG
-	memset(ptr, 0xCC, size);    // Fill with 0xCC (debug signature)
-#endif
-
 	return ptr;
 }
