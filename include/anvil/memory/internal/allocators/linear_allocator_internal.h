@@ -66,6 +66,7 @@ void linear_static_reset(MemoryBlock *const memory);
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
+[[gnu::malloc, gnu::warn_unused_result]]
 void *linear_static_alloc(MemoryBlock *block, const size_t allocation_size, const size_t alignment);
 
 /**
@@ -154,7 +155,7 @@ void linear_dynamic_reset(MemoryBlock *const memory);
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
-
+[[gnu::malloc, gnu::warn_unused_result]]
 void *linear_dynamic_alloc(MemoryBlock *block, const size_t allocation_size, const size_t alignment);
 
 /**
