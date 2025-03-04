@@ -18,7 +18,8 @@
 
 void log_and_crash(const char *expr, const char *file, int line, const char *msg);
 
-__attribute__((__pure__)) bool is_power_of_two(const size_t x);
+[[gnu::pure]]
+bool is_power_of_two(const size_t x);
 
 void *safe_malloc(const size_t size, const size_t alignment, const char *error_msg);
 

@@ -88,8 +88,8 @@ void *linear_static_alloc(MemoryBlock *block, const size_t allocation_size, cons
  *
  * @return boolean value to see if the memory block chain has the necessary available resources for an allocation.
  */
-bool linear_static_alloc_verify(MemoryBlock *const block, const size_t allocation_size,
-                                const size_t alignment) __attribute_pure__;
+[[gnu::pure]]
+bool linear_static_alloc_verify(MemoryBlock *const block, const size_t allocation_size, const size_t alignment);
 
 /*****************************************************************************************************
  *					Dynamic Allocator
@@ -181,7 +181,7 @@ void *linear_dynamic_alloc(MemoryBlock *block, const size_t allocation_size, con
  *
  * @return boolean value to see if the memory block chain has the necessary available resources for an allocation.
  */
-bool linear_dynamic_alloc_verify(MemoryBlock *const block, const size_t allocation_size,
-                                 const size_t alignment) __attribute_pure__;
+[[gnu::pure]]
+bool linear_dynamic_alloc_verify(MemoryBlock *const block, const size_t allocation_size, const size_t alignment);
 
 #endif    // !MEMORY_ARENA_ALLOCATOR_INTERNAL_H

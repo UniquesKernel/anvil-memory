@@ -25,7 +25,7 @@ void log_and_crash(const char *expr, const char *file, int line, const char *msg
 	abort();
 }
 
-__attribute_pure__ bool is_power_of_two(const size_t x) {
+bool is_power_of_two(const size_t x) {
 	return (x != 0) && ((x & (x - 1)) == 0);
 }
 
