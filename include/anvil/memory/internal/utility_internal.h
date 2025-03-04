@@ -16,6 +16,17 @@
 		}                                                                                                      \
 	} while (0)
 
+#ifdef DEBUG
+inline int debug_posix_memalign(void **ptr, size_t alignment, size_t size) {
+	int result = posix_memalign(ptr, alignment, size);
+	if (result == 0 && *ptr != NULL) {
+		memset(*ptr, 0xCC, size);
+	}
+	return result;
+}
+#define posix_memalign debug_posix_memalign
+#endif    // DEBUG
+
 void log_and_crash(const char *expr, const char *file, int line, const char *msg);
 
 [[gnu::pure]]
