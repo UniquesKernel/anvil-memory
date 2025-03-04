@@ -50,10 +50,9 @@ static_assert(_Alignof(MemoryBlock) == _Alignof(void *), "MemoryBlock alignment 
  * alloc_verify_fptr	| Pointer	| 4 or 8 Bytes
  */
 typedef struct memory_allocator_t {
-	ArenaErrorCode (*alloc_fptr)(MemoryBlock *const memory, const size_t allocation_size, const size_t alignment,
-	                             void **ptr);
-	ArenaErrorCode (*free_fptr)(MemoryBlock *const memory);
-	ArenaErrorCode (*reset_fptr)(MemoryBlock *const memory);
+	void *(*alloc_fptr)(MemoryBlock *const memory, const size_t allocation_size, const size_t alignment);
+	void (*free_fptr)(MemoryBlock *const memory);
+	void (*reset_fptr)(MemoryBlock *const memory);
 	bool (*alloc_verify_fptr)(MemoryBlock *const memory, const size_t allocation_size, const size_t alignment);
 } Allocator;
 

@@ -13,11 +13,6 @@ typedef enum allocator_type_t {
 	COUNT                  ///< Total count of allocators.
 } AllocatorType;
 
-typedef enum error_code_t {
-	ARENA_ERROR_NONE = 0,                  ///< Indicates no errors.
-	ARENA_ERROR_ALLOC_OUT_OF_MEMORY = 1    ///< Indicates the arena ran out of memory during an operation.
-} ArenaErrorCode;
-
 /**
  * @brief Creates a memory arena with the specified capacity and alignment
  *
@@ -30,14 +25,13 @@ typedef enum error_code_t {
  * - allocator_type must be a valid allocator (not COUNT)
  * - allocation of internal structures must succeed
  *
- * The function returns an error code ONLY for recoverable external failures.
+ * The function returns the memory arena on success otherwise it returns `NULL`.
  *
- * @param[out] arena         Pointer to receive the created arena
- * @param[in] allocator_type Allocation strategy (LINEAR, etc). Must not be COUNT.
- * @param[in] alignment      Memory alignment in bytes. Must be a power of 2.
- * @param[in] capacity       Initial arena size in bytes. Must be > 0.
+ * @param[in] allocator_type 	Allocation strategy (LINEAR, etc). Must not be COUNT.
+ * @param[in] alignment      	Memory alignment in bytes. Must be a power of 2.
+ * @param[in] capacity       	Initial arena size in bytes. Must be > 0.
  *
- * @return ARENA_ERROR_NONE on success, other codes only for external/runtime failures
+ * @return arena 		Pointer to receive the created arena
  *
  * @note This function follows fail-fast design - programmer errors trigger immediate
  *       crashes with diagnostics rather than returning error codes
@@ -45,31 +39,26 @@ typedef enum error_code_t {
  * @note The memory arenas created from this function are **NOT** thread safe and should not be used
  * in a cocurrent environment.
  */
-ArenaErrorCode memory_arena_create(MemoryArena **arena, const AllocatorType allocator_type, const size_t alignment,
-                                   size_t capacity);
+MemoryArena *memory_arena_create(const AllocatorType allocator_type, const size_t alignment, size_t capacity);
 
 /**
  * @brief Destroys a memory arena and free all memory allocated to it.
  *
  * This function destroys an arena and frees all memory associated with it. All functions
- * associated with the arena should be set to NULL after the arena is destroyed to avoid
+ * associated with the arena should be set to `NULL` after the arena is destroyed to avoid
  * use after free.
  *
  * The function will CRASH (not return an error) if its invariants are violated:
- * - arena is NULL.
+ * - arena is `NULL`.
  * - arena memory block is null.
  * - failed to free arena.
  *
- * The function returns an error code ONLY for recoverable external failures.
- *
- * @param[out] arena	Pointer to the arena to destroy.
- *
- * @returns ARENA_ERROR_NONE on success, other codes only for external/runtime failures
+ * @param[out] arena	Pointer to the arena to destroy sets the arena to `NULL`.
  *
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
-ArenaErrorCode memory_arena_destroy(MemoryArena **const arena);
+void memory_arena_destroy(MemoryArena **const arena);
 
 /**
  * @brief Resets a memory arena allowing its current memory to be overriden.
@@ -80,20 +69,16 @@ ArenaErrorCode memory_arena_destroy(MemoryArena **const arena);
  * NULL to avoid reading garbage values.
  *
  * The function will CRASH (not return an error) if its invariants are violated:
- * - arena is NULL.
+ * - arena is `NULL`.
  * - arena memory block is null.
  * - fails to properly reset the arena.
  *
- * The function returns an error code ONLY for recoverable external failures.
- *
  * @param[out] arena	Pointer to the arena to reset.
- *
- * @returns ARENA_ERROR_NONE on success, other codes only for external/runtime failures
  *
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
-ArenaErrorCode memory_arena_reset(MemoryArena **const arena);
+void memory_arena_reset(MemoryArena **const arena);
 
 /**
  * @brief Allocates an amount of memory equivalent to size and write it to `result`
@@ -102,24 +87,20 @@ ArenaErrorCode memory_arena_reset(MemoryArena **const arena);
  * arena's alignment. It will write the resulting memory to the `result` pointer.
  *
  * The function will CRASH (not return an error) if its invariants are violated:
- * - arena is NULL.
+ * - arena is `NULL`.
  * - arena's memory block is null.
- * - result pointer is NULL.
- *
- * The function returns the following error code if the error is recoverable:
- * - If the arena runs out of memory it will return ARENA_ERROR_ALLOC_OUT_OF_MEMORY.
+ * - result pointer is `NULL`.
  *
  * @param[out] arena	Pointer to the arena to reset.
  * @param[in]  size	amount of memory to allocate.
- * @param[out] result	pointer the allocation should be written to.
  *
- * @returns ARENA_ERROR_NONE on success, other codes only for external/runtime failures
+ * @returns pointer the allocated memory. Will return `NULL` if an error occures.
  *
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  * @note This function is **NOT** thread safe and shouldn't be used in a concurrent context.
  */
-ArenaErrorCode memory_arena_alloc(MemoryArena **const arena, const size_t size, void **result);
+void *memory_arena_alloc(MemoryArena **const arena, const size_t size);
 
 /**
  * @brief Evaluates if a memory arena has enough memory for an allocation

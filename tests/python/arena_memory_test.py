@@ -18,30 +18,22 @@ class AllocatorType(IntEnum):
     LINEAR_DYNAMIC = 1
     # COUNT = 2
 
-class ArenaErrorCode(IntEnum):
-    ARENA_ERROR_NONE = 0
-    ARENA_ERROR_ALLOC_OUT_OF_MEMORY = 1
-
 lib.memory_arena_create.argtypes = [
-    ctypes.POINTER(ctypes.POINTER(MemoryArena)),
     ctypes.c_int,
     ctypes.c_size_t,
     ctypes.c_size_t
 ]
-lib.memory_arena_create.restype = ArenaErrorCode
+lib.memory_arena_create.restype = ctypes.POINTER(MemoryArena)
 
 lib.memory_arena_destroy.argtypes = [ctypes.POINTER(ctypes.POINTER(MemoryArena))]
-lib.memory_arena_destroy.restype = ArenaErrorCode
 
 lib.memory_arena_reset.argtypes = [ctypes.POINTER(ctypes.POINTER(MemoryArena))]
-lib.memory_arena_reset.restype = ArenaErrorCode
 
 lib.memory_arena_alloc.argtypes = [
     ctypes.POINTER(ctypes.POINTER(MemoryArena)),
-    ctypes.c_size_t,
-    ctypes.POINTER(ctypes.c_void_p)
+    ctypes.c_size_t
 ]
-lib.memory_arena_alloc.restype = ArenaErrorCode
+lib.memory_arena_alloc.restype = ctypes.c_void_p
 
 lib.memory_arena_alloc_verify.argtypes = [ctypes.POINTER(MemoryArena), ctypes.c_size_t]
 lib.memory_arena_alloc_verify.restype = ctypes.c_bool
@@ -65,8 +57,7 @@ class MemoryArenaModel(RuleBasedStateMachine):
     """
     def __init__(self):
         super().__init__()
-        self.arena = ctypes.pointer(ctypes.POINTER(MemoryArena)())
-        self.err = ArenaErrorCode.ARENA_ERROR_NONE
+        self.arena = ctypes.POINTER(MemoryArena)()
 
     """
     Only create an arena if non exists. Only generate alignments 
@@ -78,35 +69,31 @@ class MemoryArenaModel(RuleBasedStateMachine):
         capacity=integers(min_value=1, max_value=1024),
         allocatorType=sampled_from(AllocatorType)
     )
-    @precondition(lambda self: not self.arena.contents)
+    @precondition(lambda self: not self.arena)
     def create_arena(self, capacity, exponent, allocatorType):
         alignment = (SIZE << exponent)
-        self.err = lib.memory_arena_create(self.arena, allocatorType, alignment, capacity)
+        self.arena = lib.memory_arena_create(allocatorType, alignment, capacity)
 
-        assert self.arena.contents
-        assert self.err == ArenaErrorCode.ARENA_ERROR_NONE
+        assert self.arena
 
     """
     Only destroy arena if one exists.
     """
     @rule()
-    @precondition(lambda self: self.arena.contents)
+    @precondition(lambda self: self.arena)
     def arena_destroy(self):
-        self.err = lib.memory_arena_destroy(self.arena)
-        self.arena = ctypes.pointer(ctypes.POINTER(MemoryArena)())
+        lib.memory_arena_destroy(self.arena)
+        self.arena = ctypes.POINTER(MemoryArena)()
 
-        assert not self.arena.contents
-        assert self.err == ArenaErrorCode.ARENA_ERROR_NONE
+        assert not self.arena
 
     """
     Only reset arena if one exists.
     """
     @rule()
-    @precondition(lambda self: self.arena.contents)
+    @precondition(lambda self: self.arena)
     def arena_reset(self):
-        self.err = lib.memory_arena_reset(self.arena)
-
-        assert self.err == ArenaErrorCode.ARENA_ERROR_NONE
+        lib.memory_arena_reset(ctypes.pointer(self.arena))
 
     """
     Only allocate memory from arena if it exists and we haven't 
@@ -114,39 +101,33 @@ class MemoryArenaModel(RuleBasedStateMachine):
     allocation attempt. This is to avoid useless repeat allocations
     """
     @rule(allocSize=integers(1,1024))
-    @precondition(lambda self: self.arena.contents and self.err != ArenaErrorCode.ARENA_ERROR_ALLOC_OUT_OF_MEMORY)
+    @precondition(lambda self: self.arena)
     def alloc(self, allocSize):
-        arena_ptr = ctypes.POINTER(ctypes.c_void_p)(ctypes.c_void_p(allocSize))
-        self.err = lib.memory_arena_alloc(self.arena, allocSize, arena_ptr)
-
-        assert self.err == ArenaErrorCode.ARENA_ERROR_ALLOC_OUT_OF_MEMORY or self.err == ArenaErrorCode.ARENA_ERROR_NONE
-        assert arena_ptr
+        lib.memory_arena_alloc(ctypes.pointer(self.arena), allocSize)
+        # No assertions - this rule just helps generate different arena states
 
     """
     Allocation verifier should be able to predict if a memory arena allocation will fail or 
     succeed and the correct error code in each case.
     """
     @rule(allocSize=integers(1,1024))
-    @precondition(lambda self: self.arena.contents)
+    @precondition(lambda self: self.arena)
     def alloc_verify(self, allocSize):
-        arena_ptr = ctypes.POINTER(ctypes.c_void_p)(ctypes.c_void_p(allocSize))
-        canAlloc = lib.memory_arena_alloc_verify(self.arena.contents, allocSize)
-        self.err = lib.memory_arena_alloc(self.arena, allocSize, arena_ptr)
+        canAlloc = lib.memory_arena_alloc_verify(self.arena, allocSize)
+        arena_ptr = lib.memory_arena_alloc(self.arena, allocSize)
 
         if canAlloc == True:
-            assert self.err == ArenaErrorCode.ARENA_ERROR_NONE
-            assert arena_ptr.contents
+            assert arena_ptr
         else:
-            assert self.err == ArenaErrorCode.ARENA_ERROR_ALLOC_OUT_OF_MEMORY
-            assert not arena_ptr.contents
+            assert not arena_ptr
 
 
     """
     Ensure the arena is and all allocated memory is destroyed at the end of the test.
     """
     def teardown(self):
-        if (self.arena.contents):
-            lib.memory_arena_destroy(self.arena)
-            self.arena = ctypes.pointer(ctypes.POINTER(MemoryArena)())
+        if (self.arena):
+            lib.memory_arena_destroy(ctypes.pointer(self.arena))
+            self.arena = ctypes.POINTER(MemoryArena)()
 
 TestMyStateMachine = MemoryArenaModel.TestCase

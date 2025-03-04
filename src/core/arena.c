@@ -7,15 +7,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-ArenaErrorCode memory_arena_create(MemoryArena **arena_internal, const AllocatorType type, const size_t alignment,
-                                   const size_t initial_size) {
+MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignment, const size_t initial_size) {
 
 	ASSERT_CRASH(is_power_of_two(alignment), "alignment must be a power of two!");
 	ASSERT_CRASH(type != COUNT, "Count is not a valid allocator type");
 	ASSERT_CRASH(initial_size != 0, "Cannot initialize zero sized memory arenas");
-	ASSERT_CRASH(*arena_internal == NULL, "Should never override existing memory arena");
 
-	ArenaErrorCode error_code = ARENA_ERROR_NONE;
 	MemoryArena *arena = safe_malloc(sizeof(*arena), _Alignof(MemoryArena), "Arena shouldn't be NULL");
 
 	arena->memory_block =
@@ -57,44 +54,34 @@ ArenaErrorCode memory_arena_create(MemoryArena **arena_internal, const Allocator
 	assert(arena->allocator.reset_fptr && "Should never have a null pointer reset function");
 	assert(arena->allocator.alloc_verify_fptr && "Should never have a null pointer verify function");
 
-	*arena_internal = arena;
-	return error_code;
+	return arena;
 }
 
-ArenaErrorCode memory_arena_destroy(MemoryArena **const arena) {
+void memory_arena_destroy(MemoryArena **const arena) {
 	ASSERT_CRASH((*arena), "Cannot destroy a NULL pointer arena");
 	ASSERT_CRASH((*arena)->memory_block, "Arena has no valid memory to destroy");
 
-	ArenaErrorCode error_code = (*arena)->allocator.free_fptr((*arena)->memory_block);
+	(*arena)->allocator.free_fptr((*arena)->memory_block);
 	free(*arena);
 
 	*arena = NULL;
-	return error_code;
 }
 
-ArenaErrorCode memory_arena_reset(MemoryArena **const arena) {
+void memory_arena_reset(MemoryArena **const arena) {
 	ASSERT_CRASH((*arena), "Cannot reset NULL pointer arena");
 	ASSERT_CRASH((*arena)->memory_block, "Arena has no memory allocated");
 
 	MemoryArena *internal_arena = *arena;
-	ArenaErrorCode error_code = internal_arena->allocator.reset_fptr(internal_arena->memory_block);
+	internal_arena->allocator.reset_fptr(internal_arena->memory_block);
 
 	*arena = internal_arena;
-	return error_code;
 }
 
-ArenaErrorCode memory_arena_alloc(MemoryArena **const arena, const size_t size, void **result) {
+void *memory_arena_alloc(MemoryArena **const arena, const size_t size) {
 	ASSERT_CRASH(*arena, "Cannot allocate memory from a null pointer arena");
 	ASSERT_CRASH((*arena)->memory_block, "Cannot allocate memory from a null pointer memory block");
-	ASSERT_CRASH(result, "Cannot store memory in a null pointer");
 
-	MemoryArena *internal_arena = *arena;
-	void *internal_ptr = NULL;
-	ArenaErrorCode error_code = internal_arena->allocator.alloc_fptr(internal_arena->memory_block, size,
-	                                                                 internal_arena->alignment, &internal_ptr);
-
-	*result = internal_ptr;
-	return error_code;
+	return (*arena)->allocator.alloc_fptr((*arena)->memory_block, size, (*arena)->alignment);
 }
 
 bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size) {
