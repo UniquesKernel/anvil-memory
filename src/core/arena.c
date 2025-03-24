@@ -1,7 +1,8 @@
-#include <anvil/memory/arena.h>
-#include <anvil/memory/internal/allocators/linear_allocator_internal.h>
-#include <anvil/memory/internal/arena_internal.h>
-#include <anvil/memory/internal/utility_internal.h>
+#include "anvil/memory/arena.h"
+#include "anvil/memory/internal/allocators/linear_dynamic_allocator_internal.h"
+#include "anvil/memory/internal/allocators/scratch_allocator_internal.h"
+#include "anvil/memory/internal/arena_internal.h"
+#include "anvil/memory/internal/utility_internal.h"
 #include <assert.h>
 #include <stdalign.h>
 #include <stdint.h>
@@ -12,9 +13,7 @@ MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignmen
 	ASSERT_CRASH(is_power_of_two(alignment), "alignment must be a power of two!");
 	ASSERT_CRASH(type != COUNT, "Count is not a valid allocator type");
 	ASSERT_CRASH(initial_size != 0, "Cannot initialize zero sized memory arenas");
-
 	MemoryArena *arena = safe_malloc(sizeof(*arena), _Alignof(MemoryArena), "Arena shouldn't be NULL");
-
 	arena->memory_block =
 	    safe_malloc(sizeof(*arena->memory_block), _Alignof(MemoryBlock), "Memory Block cannot be NULL");
 	arena->memory_block->capacity = (initial_size + (alignment - 1)) & ~(alignment - 1);
@@ -30,11 +29,11 @@ MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignmen
 	    safe_malloc(arena->memory_block->capacity, alignment, "The allocated memory cannot be NULL");
 
 	switch (type) {
-		case LINEAR_STATIC:
-			arena->allocator.free_fptr = linear_static_free;
-			arena->allocator.alloc_fptr = linear_static_alloc;
-			arena->allocator.reset_fptr = linear_static_reset;
-			arena->allocator.alloc_verify_fptr = linear_static_alloc_verify;
+		case SCRATCH:
+			arena->allocator.free_fptr = scratch_free;
+			arena->allocator.alloc_fptr = scratch_alloc;
+			arena->allocator.reset_fptr = scratch_reset;
+			arena->allocator.alloc_verify_fptr = scratch_alloc_verify;
 			break;
 		case LINEAR_DYNAMIC:
 			arena->allocator.free_fptr = linear_dynamic_free;

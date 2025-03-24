@@ -5,11 +5,9 @@ mkdir $1/01-FrontMatter
 mkdir $1/02-Body
 mkdir $1/03-EndMatter
 
-pushd ~/LinuxSetup >/dev/null
 # find the git root
 gitroot=$(git rev-parse --show-toplevel)
-gitrootToSnippet=${gitroot}/docs/docs-gen/snippet
-popd >/dev/null
+gitrootToSnippet=${gitroot}/docs/docs-gen/latex/snippet
 echo $gitrootToSnippet
 tree .
 

@@ -8,7 +8,7 @@
 typedef struct memory_arena_t MemoryArena;
 
 typedef enum allocator_type_t {
-	LINEAR_STATIC = 0,     ///< Linear static allocation strategy.
+	SCRATCH = 0,           ///< Scratch allocation strategy.
 	LINEAR_DYNAMIC = 1,    ///< Linear dynamic allocation strategy.
 	COUNT                  ///< Total count of allocators.
 } AllocatorType;

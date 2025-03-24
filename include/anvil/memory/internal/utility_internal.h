@@ -8,6 +8,10 @@
 #include <sys/cdefs.h>
 #include <time.h>
 
+// can be used together with functions like free, memory_arena_destroy etc. for
+// automatically invoking cleanup on scope exits.
+#define DEFER(clean_up_func) __attribute__((cleanup(clean_up_func)))
+
 // Macro that calls the helper function
 #define ASSERT_CRASH(expr, msg)                                                                                        \
 	do {                                                                                                           \
@@ -33,5 +37,7 @@ void log_and_crash(const char *expr, const char *file, int line, const char *msg
 bool is_power_of_two(const size_t x);
 
 void *safe_malloc(const size_t size, const size_t alignment, const char *error_msg);
+
+void inline freew(void **ptr);
 
 #endif    // !ARENA_MEMORY_UTILITY_INTERNAL_H

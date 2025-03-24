@@ -1,4 +1,4 @@
-#include <../include/anvil/memory/internal/utility_internal.h>
+#include "anvil/memory/internal/utility_internal.h"
 #include <sys/cdefs.h>
 
 // Function to log assertion failures and crash
@@ -43,4 +43,8 @@ void *safe_malloc(const size_t size, const size_t alignment, const char *error_m
 	}
 
 	return ptr;
+}
+
+void inline freew(void **ptr) {
+	free(*ptr);
 }
