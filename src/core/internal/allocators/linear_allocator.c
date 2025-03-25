@@ -1,6 +1,7 @@
 #include "anvil/memory/internal/allocators/linear_allocator_internal.h"
 #include "anvil/memory/internal/utility_internal.h"
 #include <stdlib.h>
+#include <sys/mman.h>
 
 /*****************************************************************************************************
  *					Linear Allocator
@@ -10,8 +11,8 @@ void linear_free(MemoryBlock *const memory) {
 	ASSERT_CRASH(memory, "Cannot free Null pointer to memory block");
 
 	for (MemoryBlock *current = memory, *n; current && (n = current->next, 1); current = n) {
-		free(current->memory);
-		free(current);
+		safe_free(current->memory);
+		safe_free(current);
 	}
 }
 

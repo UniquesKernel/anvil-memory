@@ -7,6 +7,7 @@
 #include <stdalign.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 
 MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignment, const size_t initial_size) {
 
@@ -61,7 +62,7 @@ void memory_arena_destroy(MemoryArena **const arena) {
 	ASSERT_CRASH((*arena)->memory_block, "Arena has no valid memory to destroy");
 
 	(*arena)->allocator.free_fptr((*arena)->memory_block);
-	free(*arena);
+	munmap(*arena, sizeof(*(*arena)));
 
 	*arena = NULL;
 }

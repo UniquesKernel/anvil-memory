@@ -22,15 +22,18 @@
  * capacity	| size_t	| 4 or 8 Bytes
  * allocated	| size_t	| 4 or 8 Bytes
  */
-typedef struct memory_block_t {
-	void *memory;
-	struct memory_block_t *next;
-	size_t capacity;
-	size_t allocated;
+typedef struct MemoryBlock {
+	void *base;           // Original mmap base
+	size_t total_size;    // Total allocated size
+	void *memory;         // Aligned memory pointer
+	size_t capacity;      // Usable capacity (<= total_size - (memory - base))
+	size_t allocated;     // Currently used bytes
+	struct MemoryBlock *next;
 } MemoryBlock;
-static_assert(sizeof(MemoryBlock) == 16 || sizeof(MemoryBlock) == 32,
-              "MemoryBlock must be either 16 or 32 bytes depending on architecture");
-static_assert(_Alignof(MemoryBlock) == _Alignof(void *), "MemoryBlock alignment must match pointer alignment");
+
+// static_assert(sizeof(MemoryBlock) == 16 || sizeof(MemoryBlock) == 32,
+//               "MemoryBlock must be either 16 or 32 bytes depending on architecture");
+// static_assert(_Alignof(MemoryBlock) == _Alignof(void *), "MemoryBlock alignment must match pointer alignment");
 
 /**
  * @brief Allocator

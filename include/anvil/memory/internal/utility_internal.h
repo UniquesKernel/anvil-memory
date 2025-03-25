@@ -39,4 +39,5 @@ void *safe_malloc(const size_t size, const size_t alignment, const char *error_m
 
 void freew(void **ptr);
 
+void safe_free(void *ptr);
 #endif    // !ARENA_MEMORY_UTILITY_INTERNAL_H

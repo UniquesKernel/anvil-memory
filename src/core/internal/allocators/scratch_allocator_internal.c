@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/cdefs.h>
+#include <sys/mman.h>
 
 /*****************************************************************************************************
  *					Scratch Allocator
@@ -13,8 +14,8 @@ void scratch_free(MemoryBlock *const memory) {
 	ASSERT_CRASH(memory, "Cannot free Null pointer to memory block");
 
 	for (MemoryBlock *current = memory, *n; current && (n = current->next, 1); current = n) {
-		free(current->memory);
-		free(current);
+		safe_free(current->memory);
+		safe_free(current);
 	}
 }
 
