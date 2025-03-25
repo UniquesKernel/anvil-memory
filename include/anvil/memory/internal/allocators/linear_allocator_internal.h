@@ -1,5 +1,5 @@
-#ifndef ANVIL_MEMORY_ALLOCATOR_LINEAR_DYNAMIC_INTERL_H
-#define ANVIL_MEMORY_ALLOCATOR_LINEAR_DYNAMIC_INTERL_H
+#ifndef ANVIL_MEMORY_ALLOCATOR_linear_INTERL_H
+#define ANVIL_MEMORY_ALLOCATOR_linear_INTERL_H
 
 #include "anvil/memory/internal/arena_internal.h"
 
@@ -8,7 +8,7 @@
  * ***************************************************************************************************/
 
 /**
- * @brief Linear dynamic memory free strategy for memory allocator.
+ * @brief Linear memory free strategy for memory allocator.
  *
  * This function will walk through all memory blocks in a memory block chain
  * and free them.
@@ -21,10 +21,10 @@
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
-void linear_dynamic_free(MemoryBlock *const memory);
+void linear_free(MemoryBlock *const memory);
 
 /**
- * @brief Linear dynamic memory reset strategy for memory allocator.
+ * @brief Linear memory reset strategy for memory allocator.
  *
  * This function will reset the first memory block in a memory block chain.
  * It will free the rest of the memory blocks. This returns the memory
@@ -38,10 +38,10 @@ void linear_dynamic_free(MemoryBlock *const memory);
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
-void linear_dynamic_reset(MemoryBlock *const memory);
+void linear_reset(MemoryBlock *const memory);
 
 /**
- * @brief Linear dynamic memory allocation strategy for memory allocator.
+ * @brief Linear memory allocation strategy for memory allocator.
  *
  * This function traverses a chain of memory blocks and allocates memory from the
  * first memory block in the chain for which there is enough memory available to
@@ -68,7 +68,7 @@ void linear_dynamic_reset(MemoryBlock *const memory);
  *       diagnostics rather than returning error codes.
  */
 [[gnu::malloc, gnu::warn_unused_result]]
-void *linear_dynamic_alloc(MemoryBlock *block, const size_t allocation_size, const size_t alignment);
+void *linear_alloc(MemoryBlock *block, const size_t allocation_size, const size_t alignment);
 
 /**
  * @brief Linear memory allocation test strategy.
@@ -94,6 +94,6 @@ void *linear_dynamic_alloc(MemoryBlock *block, const size_t allocation_size, con
  * @return boolean value to see if the memory block chain has the necessary available resources for an allocation.
  */
 [[gnu::pure]]
-bool linear_dynamic_alloc_verify(MemoryBlock *const block, const size_t allocation_size, const size_t alignment);
+bool linear_alloc_verify(MemoryBlock *const block, const size_t allocation_size, const size_t alignment);
 
-#endif    // ANVIL_MEMORY_ALLOCATOR_LINEAR_DYNAMIC_INTERL_H
+#endif    // ANVIL_MEMORY_ALLOCATOR_linear_INTERL_H

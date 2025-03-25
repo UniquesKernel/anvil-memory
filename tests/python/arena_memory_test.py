@@ -14,8 +14,8 @@ class MemoryArena(ctypes.Structure):
     pass
 
 class AllocatorType(IntEnum):
-    LINEAR_STATIC = 0
-    LINEAR_DYNAMIC = 1
+    SCRATCH = 0
+    LINEAR = 1
     # COUNT = 2
 
 lib.memory_arena_create.argtypes = [
@@ -62,16 +62,19 @@ class MemoryArenaModel(RuleBasedStateMachine):
     """
     Only create an arena if non exists. Only generate alignments 
     that are powers of two and larger than or equal to the minimum
-    system architecture alignment.
+    system architecture alignment. 
+
+    exponent capped at 6 to ensure alignment stays within reasonable 
+    limit of 1KB.
     """
     @rule(
-        exponent=integers(min_value=0,max_value=10),
-        capacity=integers(min_value=1, max_value=1024),
+        exponent=integers(min_value=0,max_value=6),
+        capacity=integers(min_value=1, max_value=(1 << 10)),
         allocatorType=sampled_from(AllocatorType)
     )
     @precondition(lambda self: not self.arena)
     def create_arena(self, capacity, exponent, allocatorType):
-        alignment = (SIZE << exponent)
+        alignment = SIZE << exponent
         self.arena = lib.memory_arena_create(allocatorType, alignment, capacity)
 
         assert self.arena

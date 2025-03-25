@@ -1,12 +1,12 @@
-#include "anvil/memory/internal/allocators/linear_dynamic_allocator_internal.h"
+#include "anvil/memory/internal/allocators/linear_allocator_internal.h"
 #include "anvil/memory/internal/utility_internal.h"
 #include <stdlib.h>
 
 /*****************************************************************************************************
- *					Linear Dynamic Allocator
+ *					Linear Allocator
  * ***************************************************************************************************/
 
-void linear_dynamic_free(MemoryBlock *const memory) {
+void linear_free(MemoryBlock *const memory) {
 	ASSERT_CRASH(memory, "Cannot free Null pointer to memory block");
 
 	for (MemoryBlock *current = memory, *n; current && (n = current->next, 1); current = n) {
@@ -15,16 +15,16 @@ void linear_dynamic_free(MemoryBlock *const memory) {
 	}
 }
 
-void linear_dynamic_reset(MemoryBlock *const memory) {
+void linear_reset(MemoryBlock *const memory) {
 	ASSERT_CRASH(memory, "Cannot reset Null pointer to memory block");
 	memory->allocated = 0;
 	if (memory->next) {
-		linear_dynamic_free(memory->next);
+		linear_free(memory->next);
 		memory->next = NULL;
 	}
 }
 
-void *linear_dynamic_alloc(MemoryBlock *block, const size_t allocation_size, const size_t alignment) {
+void *linear_alloc(MemoryBlock *block, const size_t allocation_size, const size_t alignment) {
 	ASSERT_CRASH(block, "Cannot allocate memory from a null pointer");
 	ASSERT_CRASH(block->memory, "Cannot allocate memory from null pointer to memory");
 	ASSERT_CRASH(is_power_of_two(alignment), "memory alignment on allocation must be a power of two");
@@ -49,14 +49,14 @@ void *linear_dynamic_alloc(MemoryBlock *block, const size_t allocation_size, con
 			block->next->capacity = (block->capacity << 1);
 			block->next->next = NULL;
 		}
-		return linear_dynamic_alloc(block->next, allocation_size, alignment);
+		return linear_alloc(block->next, allocation_size, alignment);
 	}
 
 	block->allocated += total_size;
 	return (void *)aligned;
 }
 
-bool linear_dynamic_alloc_verify(MemoryBlock *const block, const size_t allocation_size, const size_t alignment) {
+bool linear_alloc_verify(MemoryBlock *const block, const size_t allocation_size, const size_t alignment) {
 	ASSERT_CRASH(block, "Cannot verify available memory for NULL pointer");
 	ASSERT_CRASH(is_power_of_two(alignment), "Memory Blocks must have a power of two alignment");
 	ASSERT_CRASH(allocation_size != 0, "cannot allocate zero memory");

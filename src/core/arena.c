@@ -1,5 +1,5 @@
 #include "anvil/memory/arena.h"
-#include "anvil/memory/internal/allocators/linear_dynamic_allocator_internal.h"
+#include "anvil/memory/internal/allocators/linear_allocator_internal.h"
 #include "anvil/memory/internal/allocators/scratch_allocator_internal.h"
 #include "anvil/memory/internal/arena_internal.h"
 #include "anvil/memory/internal/utility_internal.h"
@@ -35,11 +35,11 @@ MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignmen
 			arena->allocator.reset_fptr = scratch_reset;
 			arena->allocator.alloc_verify_fptr = scratch_alloc_verify;
 			break;
-		case LINEAR_DYNAMIC:
-			arena->allocator.free_fptr = linear_dynamic_free;
-			arena->allocator.reset_fptr = linear_dynamic_reset;
-			arena->allocator.alloc_fptr = linear_dynamic_alloc;
-			arena->allocator.alloc_verify_fptr = linear_dynamic_alloc_verify;
+		case LINEAR:
+			arena->allocator.free_fptr = linear_free;
+			arena->allocator.reset_fptr = linear_reset;
+			arena->allocator.alloc_fptr = linear_alloc;
+			arena->allocator.alloc_verify_fptr = linear_alloc_verify;
 			break;
 		default:
 			ASSERT_CRASH(0, "Invalid allocator type encountered");

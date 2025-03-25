@@ -2,6 +2,7 @@
 #include <sys/cdefs.h>
 
 void log_and_crash(const char *expr, const char *file, int line, const char *msg) {
+	// Get the current time
 	time_t now = time(NULL);
 	struct tm *tm_info = localtime(&now);
 	char time_buf[20];
