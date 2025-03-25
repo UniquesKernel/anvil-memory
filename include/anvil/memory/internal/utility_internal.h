@@ -12,7 +12,6 @@
 // automatically invoking cleanup on scope exits.
 #define DEFER(clean_up_func) __attribute__((cleanup(clean_up_func)))
 
-// Macro that calls the helper function
 #define ASSERT_CRASH(expr, msg)                                                                                        \
 	do {                                                                                                           \
 		if (!(expr)) {                                                                                         \
