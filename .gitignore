@@ -2,6 +2,7 @@
 .hypothesis/
 compile_commands.json
 venv/
+build/
 
 # Prerequisites
 *.d
