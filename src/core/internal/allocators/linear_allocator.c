@@ -44,7 +44,7 @@ void *linear_alloc(MemoryBlock *block, const size_t allocation_size, const size_
 		// double the size of the previous block
 		if (!block->next) {
 			block->next = safe_malloc(sizeof(MemoryBlock), alignment, "Malloc failed");
-			block->next->memory = safe_malloc((allocation_size << 1), alignment, "Malloc failed");
+			block->next->memory = safe_malloc((block->capacity << 1), alignment, "Malloc failed");
 			block->next->allocated = 0;
 			block->next->capacity = (block->capacity << 1);
 			block->next->next = NULL;
