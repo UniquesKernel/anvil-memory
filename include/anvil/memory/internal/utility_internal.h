@@ -38,6 +38,6 @@ bool is_power_of_two(const size_t x);
 
 void *safe_malloc(const size_t size, const size_t alignment, const char *error_msg);
 
-void inline freew(void **ptr);
+void freew(void **ptr);
 
 #endif    // !ARENA_MEMORY_UTILITY_INTERNAL_H

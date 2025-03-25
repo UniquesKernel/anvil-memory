@@ -45,6 +45,6 @@ void *safe_malloc(const size_t size, const size_t alignment, const char *error_m
 	return ptr;
 }
 
-void inline freew(void **ptr) {
+inline void freew(void **ptr) {
 	free(*ptr);
 }
