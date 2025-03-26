@@ -15,7 +15,7 @@ void scratch_free(MemoryBlock *const memory) {
 
 	for (MemoryBlock *current = memory, *n; current && (n = current->next, 1); current = n) {
 		safe_free(current->memory);
-		safe_free(current);
+		free(current);
 	}
 }
 

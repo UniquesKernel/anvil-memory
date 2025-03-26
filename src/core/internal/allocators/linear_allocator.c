@@ -12,7 +12,7 @@ void linear_free(MemoryBlock *const memory) {
 
 	for (MemoryBlock *current = memory, *n; current && (n = current->next, 1); current = n) {
 		safe_free(current->memory);
-		safe_free(current);
+		free(current);
 	}
 }
 
@@ -44,7 +44,10 @@ void *linear_alloc(MemoryBlock *block, const size_t allocation_size, const size_
 		// NOTE: ADD the new block if block not big enough for allocation.
 		// double the size of the previous block
 		if (!block->next) {
-			block->next = safe_malloc(sizeof(MemoryBlock), alignment, "Malloc failed");
+			block->next = malloc(sizeof(MemoryBlock));
+
+			ASSERT_CRASH(block->next, "System out of memory");
+
 			block->next->memory = safe_malloc((block->capacity << 1), alignment, "Malloc failed");
 			block->next->allocated = 0;
 			block->next->capacity = (block->capacity << 1);
