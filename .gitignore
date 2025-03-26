@@ -4,6 +4,16 @@ compile_commands.json
 venv/
 build/
 tests/python/__pycache__/
+
+# Latex
+*.aux
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.toc
+
 # Prerequisites
 *.d
 
