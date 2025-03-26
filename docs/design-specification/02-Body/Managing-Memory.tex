@@ -44,9 +44,12 @@ We now introduce the concept of memory arenas as a mechanism for centralizing me
 
 For a program $P$ with control-flow graph $G$, let us observe that for any well-structured scope, there exist entry and exit nodes $G_a$ and $G_b$ such that all paths $S_{a \rightarrow b}$ between these points diverge from $G_a$ and reconverge at $G_b$.
 
-A memory arena establishes a form of virtual allocation wherein we allocate from a pre-allocated block belonging to the arena rather than directly from the system.
-If an arena $A$ is constructed at $G_a$ and destroyed at $G_b$, then the deallocation of $A$ propagates retrospectively through all paths $S_{a \rightarrow b}$,
-releasing all virtual allocations derived from $A$.
+\indent
+\begin{raggedright}
+	A memory arena establishes a form of virtual allocation wherein we allocate from a pre-allocated block belonging to the arena rather than directly from the system.
+	If an arena $A$ is constructed at $G_a$ and destroyed at $G_b$, then the deallocation of $A$ propagates retrospectively through all paths $S_{a \rightarrow b}$,
+	releasing all virtual allocations derived from $A$.
+\end{raggedright}
 
 This transformation centralizes memory management from a per-path concern to a per-scope concern. Rather than maintaining $T_{\pi}$ for each path $\pi$, we need only ensure proper arena lifetime management at scope boundaries. The exponential path complexity is thus reduced to linear scope complexity.
 
@@ -75,7 +78,10 @@ The Defer Pattern exhibits the following properties:
 	\item \textbf{Single-Point Specification}: Memory management decisions are made once, at the point of initialization, rather than distributed throughout the control flow graph.
 \end{enumerate}
 
-This approach effectively centralizes memory management responsibilities at initialization points, delegating enforcement to the compiler. The programmer need only ensure proper declaration of cleanup behaviors at allocation sites, substantially reducing the cognitive burden of tracking allocation-deallocation pairs across the program's control flow structure.
+\indent
+\begin{raggedright}
+	This approach effectively centralizes memory management responsibilities at initialization points, delegating enforcement to the compiler. The programmer need only ensure proper declaration of cleanup behaviors at allocation sites, substantially reducing the cognitive burden of tracking allocation-deallocation pairs across the program's control flow structure.
+\end{raggedright}
 
 We thus observe a progression from decentralized path-based verification, to scope-centralized arena management, to initialization-centralized specification—each stage reducing the cognitive distance between allocation and deallocation logic, and consequently reducing the opportunity for memory management errors.
 

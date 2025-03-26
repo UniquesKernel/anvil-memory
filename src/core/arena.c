@@ -14,6 +14,7 @@ MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignmen
 	ASSERT_CRASH(is_power_of_two(alignment), "alignment must be a power of two!");
 	ASSERT_CRASH(type != COUNT, "Count is not a valid allocator type");
 	ASSERT_CRASH(initial_size != 0, "Cannot initialize zero sized memory arenas");
+
 	MemoryArena *arena = safe_malloc(sizeof(*arena), _Alignof(MemoryArena), "Arena shouldn't be NULL");
 	arena->memory_block =
 	    safe_malloc(sizeof(*arena->memory_block), _Alignof(MemoryBlock), "Memory Block cannot be NULL");
@@ -26,6 +27,7 @@ MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignmen
 	             "Arena Capacity cannot be less or equal to allocated  "
 	             "memory when arena is created");
 	ASSERT_CRASH(arena->memory_block->next == NULL, "Next memory block should be initialized to NULL");
+
 	arena->memory_block->memory =
 	    safe_malloc(arena->memory_block->capacity, alignment, "The allocated memory cannot be NULL");
 

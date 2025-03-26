@@ -14,7 +14,6 @@
  * - capacity is larger than zero.
  * - memory is not null.
  *
- * Layout:
  * Fields	| Type		| Size
  * ---		| ---		| ---
  * memory	| pointer	| 4 or 8 Bytes
@@ -23,17 +22,15 @@
  * allocated	| size_t	| 4 or 8 Bytes
  */
 typedef struct MemoryBlock {
-	void *base;           // Original mmap base
-	size_t total_size;    // Total allocated size
-	void *memory;         // Aligned memory pointer
-	size_t capacity;      // Usable capacity (<= total_size - (memory - base))
-	size_t allocated;     // Currently used bytes
-	struct MemoryBlock *next;
+	void *memory;                ///< Aligned memory pointer
+	struct MemoryBlock *next;    ///< Linked Memory Block
+	size_t capacity;             ///< Usable capacity
+	size_t allocated;            ///< Currently used bytes
 } MemoryBlock;
 
-// static_assert(sizeof(MemoryBlock) == 16 || sizeof(MemoryBlock) == 32,
-//               "MemoryBlock must be either 16 or 32 bytes depending on architecture");
-// static_assert(_Alignof(MemoryBlock) == _Alignof(void *), "MemoryBlock alignment must match pointer alignment");
+static_assert(sizeof(MemoryBlock) == 16 || sizeof(MemoryBlock) == 32,
+              "MemoryBlock must be either 16 or 32 bytes depending on architecture");
+static_assert(_Alignof(MemoryBlock) == _Alignof(void *), "MemoryBlock alignment must match pointer alignment");
 
 /**
  * @brief Allocator

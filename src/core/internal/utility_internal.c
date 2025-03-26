@@ -67,8 +67,9 @@ void *safe_malloc(size_t size, size_t alignment, const char *error_msg) {
 	return (void *)aligned_addr;
 }
 
-void freew(void **ptr) {
-	free(*ptr);
+void freew(void *ptr) {
+
+	free((*(void **)ptr));
 }
 
 void safe_free(void *ptr) {

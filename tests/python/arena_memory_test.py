@@ -64,12 +64,12 @@ class MemoryArenaModel(RuleBasedStateMachine):
     that are powers of two and larger than or equal to the minimum
     system architecture alignment. 
 
-    exponent capped at 6 to ensure alignment stays within reasonable 
-    limit of 1KB.
+    exponent capped at 1 to ensure alignment stays within reasonable 
+    limit of 4KB.
     """
     @rule(
-        exponent=integers(min_value=0,max_value=6),
-        capacity=integers(min_value=1, max_value=(1 << 10)),
+        exponent=integers(min_value=0,max_value=12),
+        capacity=integers(min_value=1, max_value=(1 << 20)),
         allocatorType=sampled_from(AllocatorType)
     )
     @precondition(lambda self: not self.arena)
@@ -103,7 +103,7 @@ class MemoryArenaModel(RuleBasedStateMachine):
     gottent a memory arena out of memory error code from an earlier 
     allocation attempt. This is to avoid useless repeat allocations
     """
-    @rule(allocSize=integers(1,1024))
+    @rule(allocSize=integers(1,(1 << 10)))
     @precondition(lambda self: self.arena)
     def alloc(self, allocSize):
         lib.memory_arena_alloc(ctypes.pointer(self.arena), allocSize)
@@ -113,7 +113,7 @@ class MemoryArenaModel(RuleBasedStateMachine):
     Allocation verifier should be able to predict if a memory arena allocation will fail or 
     succeed and the correct error code in each case.
     """
-    @rule(allocSize=integers(1,1024))
+    @rule(allocSize=integers(1,(1<<10)))
     @precondition(lambda self: self.arena)
     def alloc_verify(self, allocSize):
         canAlloc = lib.memory_arena_alloc_verify(self.arena, allocSize)

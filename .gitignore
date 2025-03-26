@@ -3,7 +3,7 @@
 compile_commands.json
 venv/
 build/
-
+tests/python/__pycache__/
 # Prerequisites
 *.d
 

@@ -20,14 +20,14 @@
 	} while (0)
 
 #ifdef DEBUG
-inline int debug_posix_memalign(void **ptr, size_t alignment, size_t size) {
-	int result = posix_memalign(ptr, alignment, size);
-	if (result == 0 && *ptr != NULL) {
+inline void *debug_mmap(void *addr, size_t size, int __prod, __flags, __fd, __off_t __offset) {
+	void *result = mmap(addr, size, __prod, __flags, __fd, __off_t__offset);
+	if (result) {
 		memset(*ptr, 0xCC, size);
 	}
 	return result;
 }
-#define posix_memalign debug_posix_memalign
+#define mmap debug_mmap
 #endif    // DEBUG
 
 void log_and_crash(const char *expr, const char *file, int line, const char *msg);
@@ -35,9 +35,10 @@ void log_and_crash(const char *expr, const char *file, int line, const char *msg
 [[gnu::pure]]
 bool is_power_of_two(const size_t x);
 
+[[gnu::malloc]]
 void *safe_malloc(const size_t size, const size_t alignment, const char *error_msg);
 
-void freew(void **ptr);
+void freew(void *ptr);
 
 void safe_free(void *ptr);
 #endif    // !ARENA_MEMORY_UTILITY_INTERNAL_H
