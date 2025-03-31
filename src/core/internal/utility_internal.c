@@ -29,23 +29,10 @@ bool is_power_of_two(const size_t x) {
 	return (x != 0) && ((x & (x - 1)) == 0);
 }
 
-typedef struct Metadata {
-	void *base;
-	size_t total_size;
-} Metadata;
-static_assert(sizeof(Metadata) == 16, "Metadata should be 16 bytes");
-
-void *safe_malloc(size_t size, size_t alignment, const char *error_msg) {
-	// Aggressive checks for programmer errors
-	if (size == 0) {
-		log_and_crash("safe_malloc", __FILE__, __LINE__, "Cannot allocate zero bytes");
-	}
-	if (!is_power_of_two(alignment)) {    // Check if power of two
-		log_and_crash("safe_malloc", __FILE__, __LINE__, "Alignment must be a power of two");
-	}
-	if (alignment > (1 << 16)) {          // 64KB alignment cap (adjust as needed)
-		log_and_crash("safe_malloc", __FILE__, __LINE__, "Alignment exceeds limit");
-	}
+void *safe_aligned_alloc(size_t size, size_t alignment, const char *error_msg) {
+	ASSERT_CRASH(size != 0, "Cannot allocate zero bytes");
+	ASSERT_CRASH(is_power_of_two(alignment), "Alignment must be a power of two");
+	ASSERT_CRASH(alignment <= (1 << 16), "Alignment exceeds limit");
 
 	size_t page_size = (size_t)sysconf(_SC_PAGESIZE);
 	size_t total_size = size + alignment + sizeof(Metadata);
@@ -53,9 +40,8 @@ void *safe_malloc(size_t size, size_t alignment, const char *error_msg) {
 	total_size = (total_size + page_size - 1) & ~(page_size - 1);
 
 	void *base = mmap(NULL, total_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	if (base == MAP_FAILED) {
-		log_and_crash("mmap", __FILE__, __LINE__, error_msg);
-	}
+
+	ASSERT_CRASH(base != MAP_FAILED, error_msg);
 
 	uintptr_t addr = (uintptr_t)base + sizeof(Metadata);
 	uintptr_t aligned_addr = (addr + alignment - 1) & ~(alignment - 1);
@@ -67,12 +53,12 @@ void *safe_malloc(size_t size, size_t alignment, const char *error_msg) {
 	return (void *)aligned_addr;
 }
 
-void freew(void *ptr) {
+void safe_free(void *ptr) {
 
 	free((*(void **)ptr));
 }
 
-void safe_free(void *ptr) {
+void safe_aligned_free(void *ptr) {
 	if (!ptr)
 		return;
 

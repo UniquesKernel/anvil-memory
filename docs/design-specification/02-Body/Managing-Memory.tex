@@ -1,63 +1,88 @@
 \section{Memory Management}
 \label{sec:Managing-Memory}
 
-Let us define a program $P$ as an ordered sequence of instructions $(i_n)_{n \in \mathbb{N}}$.
-Let us further define $A \subset P$ as the set of allocation instructions (e.g., malloc, calloc) and
-$B \subset P$ as the set of deallocation instructions (e.g., free).
-We shall say that a program $P$ is memory-safe (exhibits neither memory leaks nor double frees) if and only if:
+Let a program $ P \equiv (i_n)_{n \in \mathbb{N}} $ be an ordered sequence of instructions.
+Let $ A \subset P $ denote the set of allocation instructions and $ B \subset P $ the deallocation instructions.
 
-\begin{definition}{Memory-safe Program (no leaks or double frees)}{Memory-safe-program}
+\begin{definition}{Memory-safe Program}{memory-safe}
+	A program $P$ is \emph{memory-safe} if for all execution paths $\pi \in \Pi(P)$:
 	\begin{enumerate}
-		\item For every static control-flow path $\pi$ (a path through the program, abstracting away loops and recursion),
-		      there exists a bijective mapping $T_{\pi} : A_{\pi} \rightarrow B_{\pi}$ where:
+		\item Exists bijection $T_\pi: A_\pi \rightarrow B_\pi$ where:
 		      \begin{itemize}
-			      \item $A_{\pi} \subset A$ denotes the set of allocations on $\pi$.
-			      \item $B_{\pi} \subset B$ denotes the set of deallocations on $\pi$.
-			      \item $\forall a_i \in A_{\pi} \exists ! b_i \in B_{\pi} : T_{\pi}(a_i) = b_i$.
+			      \item $\forall a_i \in A_\pi,\ T_\pi(a_i) = b_i$ is unique.
+			      \item $a_i$ lexically precedes $b_i$ on $\pi$.
 		      \end{itemize}
-
-		\item $\forall (a_i,b_i) \in T_{\pi}$, $a_i$ lexically precedes $b_i$ on $\pi$.
-		\item Let $G$ denote a graph wherein nodes represent allocation-deallocation pairs $(a_i, b_i)$, and edges
-		      represent cleanup dependencies (i.e., $b_i$ cannot be executed unless $b_j$ has already been executed).
-		      The graph $G$ must be acyclic for all $\pi$.
-
-		\item $\forall (a_i,b_i), (a_j,b_j) \in T_{\pi}$, the memory regions allocated by $a_i$ and $a_j$ must be
-		      disjoint.
+		\item The deallocation graph $G_\pi = (V_\pi, E_\pi)$ is acyclic.
+		\item $\text{mem}(a_i) \cap \text{mem}(a_j) = \emptyset$ for $i \neq j$.
 	\end{enumerate}
 \end{definition}
-
-The aforesaid definition, although mathematically precise, does not account for the dynamic nature of memory allocation through loops and recursion. Nevertheless, it suffices for our present analysis of memory management approaches in languages with explicit memory control, particularly \C{}. We shall now examine three successively more centralized approaches to the problem of memory management.
-
-\subsection{Decentralized Path-Based Memory Management}
-\label{subsec:Decentralized-Path-Based-Memory-Management}
-
-Consider a program $P = (i_n)_{n \in \mathbb{N}}$ with a set $C = \{i_c \in P | i_c\, \text{is a conditional instruction}\}$ of conditional branch instructions. The number of distinct paths $S$ in the static control-flow graph satisfies the inequality $S \geq 2^{|C|}$.
-
-In the decentralized approach, each path $\pi$ through the program must independently satisfy the bijective mapping $T_{\pi}$ between allocations and deallocations. As $|C|$ increases, the complexity grows exponentially. With merely ten independent conditional statements, one must verify memory correctness across $2^{10}$ distinct paths. For non-trivial programs where $|C| \gg 10$, this verification becomes combinatorially intractable.
-
-When $|C| = 20$, the programmer must ensure correct memory management across approximately $10^6$ paths. Should any single path fail to satisfy Definition~\ref{def:Memory-safe-program}, the program manifests either memory leaks or erroneous double-free operations. Thus, the decentralized approach imposes a verification burden that grows exponentially with program complexity.
 
 \subsection{Scope-Centralized Memory Management}
 \label{subsec:Scope-Centralized-Memory-Management}
 
-We now introduce the concept of memory arenas as a mechanism for centralizing memory management at the scope level, thereby reducing the complexity of the verification problem.
+\begin{definition}{Memory Arena}{memory-arena}
+	A \emph{memory arena} $\mathcal{A} \equiv (\mathcal{M}, F, \Lambda)$ where:
+	\begin{itemize}
+		\item $\mathcal{M} = \{\mathcal{M}_1,...,\mathcal{M}_k\}$ - is a finite set of disjoint memory blocks..
+		\item $F \subseteq \bigcup_{i=1}^k \mathcal{M}_i$ - is the set of free addresses.
+		\item $\Lambda$ - is an allocator with allocation strategy $\sigma$.
+	\end{itemize}
 
-For a program $P$ with control-flow graph $G$, let us observe that for any well-structured scope, there exist entry and exit nodes $G_a$ and $G_b$ such that all paths $S_{a \rightarrow b}$ between these points diverge from $G_a$ and reconverge at $G_b$.
+	The \emph{allocation function} $H: \mathcal{A} \rightharpoonup \mathcal{A} \times \texttt{addr}(\mathcal{M})$ is:
+	\[
+		H((\mathcal{M}, F, \Lambda)) = \begin{cases}
+			((\mathcal{M}, F \setminus \{a\}, \Lambda), a) & \text{if } a \in F \text{ via } \sigma \\
+			\text{undefined}                               & \text{otherwise}
+		\end{cases}
+	\]
+	Subject to invariants:
+	\begin{enumerate}
+		\item Disjointness: $\mathcal{M}_i \cap \mathcal{M}_j = \emptyset\ \forall i \neq j$.
+		\item No individual deallocations: $\nexists b_i \in B$ for $a_i \in \mathcal{A}$.
+		\item Mass reclamation: $\bigcup \mathcal{M}_\pi \subseteq F_\pi^{\text{final}}$ at scope exit.
+	\end{enumerate}
+\end{definition}
 
-\indent
-\begin{raggedright}
-	A memory arena establishes a form of virtual allocation wherein we allocate from a pre-allocated block belonging to the arena rather than directly from the system.
-	If an arena $A$ is constructed at $G_a$ and destroyed at $G_b$, then the deallocation of $A$ propagates retrospectively through all paths $S_{a \rightarrow b}$,
-	releasing all virtual allocations derived from $A$.
-\end{raggedright}
+For control-flow graph $G$ with scope entry/exit nodes $G_a,G_b$:
+\begin{itemize}
+	\item Arena instantiation at $G_a$ creates $\mathcal{A} = (\mathcal{M}, F, \Lambda)$.
+	\item All paths $S_{a\rightarrow b}$ allocate via $H((\mathcal{M}, F, \Lambda))$.
+	\item Destruction at $G_b$ enforces $F^{\text{final}} = \bigcup \mathcal{M}$, satisfying Definition~\ref{def:memory-safe}.
+\end{itemize}
 
-This transformation centralizes memory management from a per-path concern to a per-scope concern. Rather than maintaining $T_{\pi}$ for each path $\pi$, we need only ensure proper arena lifetime management at scope boundaries. The exponential path complexity is thus reduced to linear scope complexity.
+This formalism reduces verification complexity from $O(2^{|C|})$ paths to $O(1)$ scope-level invariants. The allocator $\Lambda$ implements $\sigma$ through $H$ while maintaining:
 
-For optimal application of this approach, an arena should remain confined to its originating scope. If extension beyond this scope is necessary, the arena's instantiation should be elevated to an enclosing scope with appropriate lifetime characteristics.
+\begin{align*}
+	\forall \pi \in \Pi(P),\  & \text{1. } T_\pi \text{ bijection} \Rightarrow F^{\text{final}} = \bigcup \mathcal{M} \\
+	                          & \text{2. Lexical precedence} \Rightarrow \text{Scope nesting}                         \\
+	                          & \text{3. Disjointness} \Rightarrow \mathcal{M}_i \cap \mathcal{M}_j = \emptyset
+\end{align*}
+
+\begin{figure}[h]
+	\begin{center}
+		\begin{tikzpicture}
+			\draw (0,0) rectangle (6,1);
+			\foreach \x in {1,2} {
+					\draw (\x,0) -- (\x,1);
+				}
+			\foreach \x in {2,3,4,5} {
+					\shade[left color=green!40!white, right color=green!40!white, draw=black] (2, 0) rectangle (6, 1);
+					\draw (5,0.5) node {free};
+				}
+			\foreach \x/\y in {0/{$a_0$},1/$a_1$,2/\dots,3/$a_n$} {
+			\filldraw[fill=red!40!white, draw=black] (\x, 0) rectangle (\x + 1, 1);
+			\draw (\x + 0.5, 0.5) node {\y};
+			}
+			\draw (3,1.5) node {Memory Arena};
+		\end{tikzpicture}
+	\end{center}
+	\caption{Memory arena structure showing sequential allocations within contiguous blocks.}
+	\label{fig:memory-arena-illustration}
+\end{figure}
+
 
 \subsection{Initialization-Centralized Memory Management}
-\label{subsec:Initialization-Centralized-Memory-Management}
-
+\label{subsec:Initialization-Centralized}
 We now present a further centralization of memory management through what we shall term the "Defer Pattern," which couples allocation and deallocation at the point of initialization.
 
 Utilizing compiler facilities such as the cleanup attribute in GCC, one may specify:
@@ -84,5 +109,17 @@ The Defer Pattern exhibits the following properties:
 \end{raggedright}
 
 We thus observe a progression from decentralized path-based verification, to scope-centralized arena management, to initialization-centralized specification—each stage reducing the cognitive distance between allocation and deallocation logic, and consequently reducing the opportunity for memory management errors.
+
+For compiler-enforced cleanup:
+\[
+	\underset{\text{Allocation}}{\underbrace{\text{MemoryArena}^* \mathcal{A}}}
+	\ \underset{\text{Deallocation}}{\xrightarrow{\text{DEFER}}}
+	\underset{\text{Scope exit}}{\mathcal{A} \mapsto (\mathcal{M}, F^{\text{final}}, \Lambda)}
+\]
+
+where the DEFER macro enforces:
+\[
+	\mathcal{A} \mapsto (\emptyset, \bigcup \mathcal{M}, \Lambda)\ \forall \pi \in \Pi(P)
+\]
 
 \newpage

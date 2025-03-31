@@ -11,7 +11,7 @@ void linear_free(MemoryBlock *const memory) {
 	ASSERT_CRASH(memory, "Cannot free Null pointer to memory block");
 
 	for (MemoryBlock *current = memory, *n; current && (n = current->next, 1); current = n) {
-		safe_free(current->memory);
+		safe_aligned_free(current->memory);
 		free(current);
 	}
 }
@@ -33,31 +33,33 @@ void *linear_alloc(MemoryBlock *block, const size_t allocation_size, const size_
 	             "alignment must be equal to or larger than system minimum alignment");
 	ASSERT_CRASH(allocation_size != 0, "Cannot allocate memory of size zero");
 
-	uintptr_t base = (uintptr_t)block->memory;
-	uintptr_t current = base + block->allocated;
-	uintptr_t aligned = (current + (alignment - 1)) & ~(uintptr_t)(alignment - 1);
-	size_t offset = aligned - current;
+	MemoryBlock *current_block = block;
 
-	size_t total_size = allocation_size + offset;
+	while (1) {
+		uintptr_t base = (uintptr_t)current_block->memory;
+		uintptr_t current = base + current_block->allocated;
+		uintptr_t aligned = (current + (alignment - 1)) & ~(uintptr_t)(alignment - 1);
+		size_t offset = aligned - current;
+		size_t total_size = allocation_size + offset;
 
-	if (total_size > block->capacity - block->allocated) {
-		// NOTE: ADD the new block if block not big enough for allocation.
-		// double the size of the previous block
-		if (!block->next) {
-			block->next = malloc(sizeof(MemoryBlock));
-
-			ASSERT_CRASH(block->next, "System out of memory");
-
-			block->next->memory = safe_malloc((block->capacity << 1), alignment, "Malloc failed");
-			block->next->allocated = 0;
-			block->next->capacity = (block->capacity << 1);
-			block->next->next = NULL;
+		if (total_size <= current_block->capacity - current_block->allocated) {
+			current_block->allocated += total_size;
+			return (void *)aligned;
 		}
-		return linear_alloc(block->next, allocation_size, alignment);
-	}
 
-	block->allocated += total_size;
-	return (void *)aligned;
+		if (!current_block->next) {
+			current_block->next = malloc(sizeof(MemoryBlock));
+			ASSERT_CRASH(current_block->next, "System out of memory");
+
+			current_block->next->memory =
+			    safe_aligned_alloc((current_block->capacity << 1), alignment, "Malloc failed");
+			current_block->next->allocated = 0;
+			current_block->next->capacity = (current_block->capacity << 1);
+			current_block->next->next = NULL;
+		}
+
+		current_block = current_block->next;
+	}
 }
 
 bool linear_alloc_verify(MemoryBlock *const block, const size_t allocation_size, const size_t alignment) {

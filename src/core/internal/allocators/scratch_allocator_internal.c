@@ -14,7 +14,7 @@ void scratch_free(MemoryBlock *const memory) {
 	ASSERT_CRASH(memory, "Cannot free Null pointer to memory block");
 
 	for (MemoryBlock *current = memory, *n; current && (n = current->next, 1); current = n) {
-		safe_free(current->memory);
+		safe_aligned_free(current->memory);
 		free(current);
 	}
 }

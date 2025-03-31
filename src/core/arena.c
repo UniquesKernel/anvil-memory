@@ -34,7 +34,7 @@ MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignmen
 	ASSERT_CRASH(arena->memory_block->next == NULL, "Next memory block should be initialized to NULL");
 
 	arena->memory_block->memory =
-	    safe_malloc(arena->memory_block->capacity, alignment, "The allocated memory cannot be NULL");
+	    safe_aligned_alloc(arena->memory_block->capacity, alignment, "The allocated memory cannot be NULL");
 
 	switch (type) {
 		case SCRATCH:
