@@ -23,8 +23,9 @@ list(FILTER SOURCES EXCLUDE REGEX ".*main\\.c$")
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 # Change include directories to use generator expressions for installation
-target_include_directories(${PROJECT_NAME} PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+target_include_directories(${PROJECT_NAME} 
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/internal
   $<INSTALL_INTERFACE:include>
 )
 set_compiler_options(${PROJECT_NAME})
@@ -40,8 +41,9 @@ install(TARGETS ${PROJECT_NAME}
 
 # Install header files, maintaining directory structure
 install(DIRECTORY include/
-    DESTINATION include
+    DESTINATION include/
     FILES_MATCHING PATTERN "*.h"
+    PATTERN "internal" EXCLUDE
 )
 
 # Create and install CMake configuration files
