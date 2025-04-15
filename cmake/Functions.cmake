@@ -9,6 +9,8 @@ function(set_compiler_options project_name)
     -Wpedantic
     -Wconversion
     -Wshadow
+    -Wswitch-enum
+    -Wswitch
     -O3
   )
 

@@ -63,6 +63,7 @@ static_assert(_Alignof(Metadata) == _Alignof(void *), "should have the natural a
  * @param[in] `error_msg` error message to log.
  *
  */
+[[gnu::noreturn]]
 void log_and_crash(const char *expr, const char *file, int line, const char *msg);
 
 /**

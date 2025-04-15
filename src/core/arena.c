@@ -1,6 +1,7 @@
 #include "anvil/memory/arena.h"
 #include "anvil/memory/internal/allocators/linear_allocator_internal.h"
 #include "anvil/memory/internal/allocators/scratch_allocator_internal.h"
+#include "anvil/memory/internal/allocators/stack_allocator_internal.h"
 #include "anvil/memory/internal/arena_internal.h"
 #include "anvil/memory/internal/utility_internal.h"
 #include <assert.h>
@@ -27,6 +28,7 @@ MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignmen
 	arena->memory_block->allocated = 0;
 	arena->memory_block->next = NULL;
 	arena->alignment = alignment;
+	arena->allocator_type = type;
 
 	ASSERT_CRASH(arena->memory_block->capacity > arena->memory_block->allocated,
 	             "Arena Capacity cannot be less or equal to allocated  "
@@ -36,31 +38,6 @@ MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignmen
 	arena->memory_block->memory =
 	    safe_aligned_alloc(arena->memory_block->capacity, alignment, "The allocated memory cannot be NULL");
 
-	switch (type) {
-		case SCRATCH:
-			arena->allocator.free_fptr = scratch_free;
-			arena->allocator.alloc_fptr = scratch_alloc;
-			arena->allocator.reset_fptr = scratch_reset;
-			arena->allocator.alloc_verify_fptr = scratch_alloc_verify;
-			break;
-		case LINEAR:
-			arena->allocator.free_fptr = linear_free;
-			arena->allocator.reset_fptr = linear_reset;
-			arena->allocator.alloc_fptr = linear_alloc;
-			arena->allocator.alloc_verify_fptr = linear_alloc_verify;
-			break;
-		default:
-			ASSERT_CRASH(0, "Invalid allocator type encountered");
-	}
-
-	// NOTE:(UniquesKernel) These asserts serve as guardrails in case new allocators
-	// are added but improperly implemented during development. They are not present in
-	// release builds.
-	assert(arena->allocator.free_fptr && "Should never have a null pointer free function");
-	assert(arena->allocator.alloc_fptr && "Should never have a null pointer alloc function");
-	assert(arena->allocator.reset_fptr && "Should never have a null pointer reset function");
-	assert(arena->allocator.alloc_verify_fptr && "Should never have a null pointer verify function");
-
 	return arena;
 }
 
@@ -68,7 +45,20 @@ void memory_arena_destroy(MemoryArena **const arena) {
 	ASSERT_CRASH((*arena), "Cannot destroy a NULL pointer arena");
 	ASSERT_CRASH((*arena)->memory_block, "Arena has no valid memory to destroy");
 
-	(*arena)->allocator.free_fptr((*arena)->memory_block);
+	switch ((*arena)->allocator_type) {
+		case SCRATCH:
+			scratch_free((*arena)->memory_block);
+			return;
+		case LINEAR:
+			linear_free((*arena)->memory_block);
+			return;
+		case STACK:
+			stack_free((*arena)->memory_block);
+			return;
+		case COUNT:
+		default:
+			ASSERT_CRASH(0, "");
+	}
 	free(*arena);
 }
 
@@ -76,22 +66,55 @@ void memory_arena_reset(MemoryArena **const arena) {
 	ASSERT_CRASH((*arena), "Cannot reset NULL pointer arena");
 	ASSERT_CRASH((*arena)->memory_block, "Arena has no memory allocated");
 
-	MemoryArena *internal_arena = *arena;
-	internal_arena->allocator.reset_fptr(internal_arena->memory_block);
-
-	*arena = internal_arena;
+	switch ((*arena)->allocator_type) {
+		case SCRATCH:
+			scratch_reset((*arena)->memory_block);
+			return;
+		case LINEAR:
+			linear_reset((*arena)->memory_block);
+			return;
+		case STACK:
+			stack_free((*arena)->memory_block);
+			return;
+		case COUNT:
+		default:
+			ASSERT_CRASH(0, "");
+	}
+	__builtin_unreachable();
 }
 
 void *memory_arena_alloc(MemoryArena **const arena, const size_t size) {
 	ASSERT_CRASH(*arena, "Cannot allocate memory from a null pointer arena");
 	ASSERT_CRASH((*arena)->memory_block, "Cannot allocate memory from a null pointer memory block");
 
-	return (*arena)->allocator.alloc_fptr((*arena)->memory_block, size, (*arena)->alignment);
+	switch ((*arena)->allocator_type) {
+		case SCRATCH:
+			return scratch_alloc((*arena)->memory_block, size, (*arena)->alignment);
+		case LINEAR:
+			return linear_alloc((*arena)->memory_block, size, (*arena)->alignment);
+		case STACK:
+			return stack_alloc((*arena)->memory_block, size, (*arena)->alignment);
+		case COUNT:
+		default:
+			ASSERT_CRASH(0, "");
+	}
+	__builtin_unreachable();
 }
 
 bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size) {
 	ASSERT_CRASH(arena, "Cannot verify a null pointer arena");
 	ASSERT_CRASH(arena->memory_block, "Cannot verify if a null memory_block can contain memory allocation");
 
-	return arena->allocator.alloc_verify_fptr(arena->memory_block, size, arena->alignment);
+	switch (arena->allocator_type) {
+		case SCRATCH:
+			return scratch_alloc_verify(arena->memory_block, size, arena->alignment);
+		case LINEAR:
+			return linear_alloc_verify(arena->memory_block, size, arena->alignment);
+		case STACK:
+			return stack_alloc_verify(arena->memory_block, size, arena->alignment);
+		case COUNT:
+		default:
+			ASSERT_CRASH(0, "");
+	}
+	__builtin_unreachable();
 }
