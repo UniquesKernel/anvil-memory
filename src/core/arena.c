@@ -6,9 +6,12 @@
 #include "anvil/memory/internal/utility_internal.h"
 #include <assert.h>
 #include <stdalign.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+
+#define INITIAL_STACK_SNAPSHOT_SIZE 10
 
 MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignment, const size_t initial_size) {
 
@@ -30,6 +33,27 @@ MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignmen
 	arena->alignment = alignment;
 	arena->allocator_type = type;
 
+	switch (arena->allocator_type) {
+		case LINEAR:
+			arena->state.linearAllocatorState =
+			    (LinearAllocatorState){._dummy_variable_to_comply_with_standards = 0};
+			break;
+		case SCRATCH:
+			arena->state.scratchAllocatorState =
+			    (ScratchAllocatorState){._dummy_variable_to_comply_with_standards = 0};
+			break;
+		case STACK:
+			arena->state.stackAllocatorState.top = arena->memory_block;
+			arena->state.stackAllocatorState.top->next = NULL;
+			arena->state.stackAllocatorState.snapshots =
+			    malloc(INITIAL_STACK_SNAPSHOT_SIZE * sizeof(Snapshot));
+			ASSERT_CRASH(arena->state.stackAllocatorState.snapshots, "");
+			break;
+		case COUNT:
+		default:
+			ASSERT_CRASH(0, "Failed to initialize arena state");
+	}
+
 	ASSERT_CRASH(arena->memory_block->capacity > arena->memory_block->allocated,
 	             "Arena Capacity cannot be less or equal to allocated  "
 	             "memory when arena is created");
@@ -48,18 +72,20 @@ void memory_arena_destroy(MemoryArena **const arena) {
 	switch ((*arena)->allocator_type) {
 		case SCRATCH:
 			scratch_free((*arena)->memory_block);
-			return;
+			break;
 		case LINEAR:
 			linear_free((*arena)->memory_block);
-			return;
+			break;
 		case STACK:
+			free((*arena)->state.stackAllocatorState.snapshots);
 			stack_free((*arena)->memory_block);
-			return;
+			break;
 		case COUNT:
 		default:
 			ASSERT_CRASH(0, "");
 	}
 	free(*arena);
+	(*arena) = NULL;
 }
 
 void memory_arena_reset(MemoryArena **const arena) {
@@ -74,7 +100,8 @@ void memory_arena_reset(MemoryArena **const arena) {
 			linear_reset((*arena)->memory_block);
 			return;
 		case STACK:
-			stack_free((*arena)->memory_block);
+			stack_reset((*arena)->memory_block);
+			(*arena)->state.stackAllocatorState.top = (*arena)->memory_block;
 			return;
 		case COUNT:
 		default:
@@ -93,7 +120,7 @@ void *memory_arena_alloc(MemoryArena **const arena, const size_t size) {
 		case LINEAR:
 			return linear_alloc((*arena)->memory_block, size, (*arena)->alignment);
 		case STACK:
-			return stack_alloc((*arena)->memory_block, size, (*arena)->alignment);
+			return stack_alloc(&(*arena)->state.stackAllocatorState.top, size, (*arena)->alignment);
 		case COUNT:
 		default:
 			ASSERT_CRASH(0, "");
@@ -111,7 +138,7 @@ bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size) {
 		case LINEAR:
 			return linear_alloc_verify(arena->memory_block, size, arena->alignment);
 		case STACK:
-			return stack_alloc_verify(arena->memory_block, size, arena->alignment);
+			return stack_alloc_verify(arena->state.stackAllocatorState.top, size, arena->alignment);
 		case COUNT:
 		default:
 			ASSERT_CRASH(0, "");

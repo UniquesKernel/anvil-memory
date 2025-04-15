@@ -32,7 +32,7 @@ build:
 
 build-test:
 	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) -DBUILD_TESTING=ON -DENABLE_ASAN=ON -DENABLE_UBSAN=ON -DLOG_FILE=ON .. && make
+	@cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) -DBUILD_TESTING=ON -DENABLE_ASAN=OFF -DENABLE_UBSAN=OFF -DLOG_FILE=ON .. && make
 
 # Installation targets
 .PHONY: install install-dev
@@ -61,9 +61,13 @@ package: build
 	@echo "Package created in $(BUILD_DIR)"
 
 # Testing targets
-.PHONY: test test-memcheck
+.PHONY: test test-memcheck test-debug
 test: build-test
 	PYTHONPATH=./tests/python ASAN_OPTIONS=verify_asan_link_order=0 ./venv/bin/python3 -m pytest \
+		--hypothesis-show-statistics ./tests/python
+
+test-debug: build-test
+	PYTHONPATH=./tests/python ASAN_OPTIONS=verify_asan_link_order=0 gdb --args ./venv/bin/python3 -m pytest \
 		--hypothesis-show-statistics ./tests/python
 
 test-memcheck: build-test

@@ -16,7 +16,8 @@ class MemoryArena(ctypes.Structure):
 class AllocatorType(IntEnum):
     SCRATCH = 0
     LINEAR = 1
-    # COUNT = 2
+    STACK = 2
+    # COUNT = 3
 
 lib.memory_arena_create.argtypes = [
     ctypes.c_int,

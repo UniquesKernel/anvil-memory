@@ -60,6 +60,7 @@ void *linear_alloc(MemoryBlock *block, const size_t allocation_size, const size_
 
 		current_block = current_block->next;
 	}
+	__builtin_unreachable();
 }
 
 bool linear_alloc_verify(MemoryBlock *const block, const size_t allocation_size, const size_t alignment) {

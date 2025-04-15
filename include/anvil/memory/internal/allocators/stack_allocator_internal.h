@@ -6,7 +6,7 @@
 
 void stack_free(MemoryBlock *const memory_block);
 void stack_reset(MemoryBlock *const memory_block);
-void *stack_alloc(MemoryBlock *const memory_block, const size_t size, const size_t alignment);
+void *stack_alloc(MemoryBlock **const memory_block, const size_t size, const size_t alignment);
 bool stack_alloc_verify(MemoryBlock *const memory_block, const size_t size, const size_t alignment);
 
 #endif    // !ANVIL_MEMORY_ARENA_STACK

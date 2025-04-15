@@ -23,7 +23,7 @@
 inline void *debug_mmap(void *addr, size_t size, int __prod, __flags, __fd, __off_t __offset) {
 	void *result = mmap(addr, size, __prod, __flags, __fd, __off_t__offset);
 	if (result) {
-		memset(*ptr, 0xCC, size);
+		memset(addr, 0xCC, size);
 	}
 	return result;
 }

@@ -1,6 +1,7 @@
 #ifndef ANVIL_MEMORY_ARENA_H
 #define ANVIL_MEMORY_ARENA_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/cdefs.h>
