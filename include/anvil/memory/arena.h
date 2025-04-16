@@ -124,6 +124,47 @@ void *memory_arena_alloc(MemoryArena **const arena, const size_t size);
 [[gnu::pure]]
 bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size);
 
+/**
+ * @brief Records the current state of a stack memory arena.
+ *
+ * This function saves a snapshot of the current allocation state of a stack memory arena,
+ * allowing future operations to unwind back to this point. The snapshot captures the current
+ * memory block, its allocated amount, and capacity.
+ *
+ * The function will CRASH (not return an error) if its invariants are violated:
+ * - arena is `NULL` or points to `NULL`.
+ * - arena is not a stack allocator type.
+ * - memory allocation for the snapshot array fails.
+ *
+ * @param[in,out] arena Pointer to the stack arena whose state should be recorded.
+ *
+ * @note This function is only valid for arenas created with the STACK allocator type.
+ * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
+ *       diagnostics rather than returning error codes.
+ * @note This function is **NOT** thread safe and shouldn't be used in a concurrent context.
+ */
 void memory_stack_arena_record(MemoryArena **const arena);
+
+/**
+ * @brief Unwinds a stack memory arena to its previously recorded state.
+ *
+ * This function restores a stack memory arena to the most recently recorded snapshot state.
+ * It resets the memory allocated after the snapshot was taken and frees any additional
+ * memory blocks that were allocated. The snapshot is then removed from the snapshot stack.
+ *
+ * The function will CRASH (not return an error) if its invariants are violated:
+ * - arena is `NULL` or points to `NULL`.
+ * - arena is not a stack allocator type.
+ * - no snapshots have been recorded (attempting to unwind past the initial state).
+ *
+ * @param[in,out] arena Pointer to the stack arena to unwind.
+ *
+ * @note This function is only valid for arenas created with the STACK allocator type.
+ * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
+ *       diagnostics rather than returning error codes.
+ * @note This function is **NOT** thread safe and shouldn't be used in a concurrent context.
+ * @note All memory allocated after the snapshot was taken will be invalidated.
+ *       Pointers to this memory should be considered invalid after unwinding.
+ */
 void memory_stack_arena_unwind(MemoryArena **const arena);
 #endif    // !ANVIL_MEMORY_ARENA_H

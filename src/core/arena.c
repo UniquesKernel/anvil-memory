@@ -151,7 +151,6 @@ bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size) {
 void memory_stack_arena_record(MemoryArena **const arena) {
 	INVARIANT(arena && (*arena), "Cannot record the state of a NULL pointer");
 	INVARIANT((*arena)->allocator_type == STACK, "Only a stack based arena can record its state");
-
 	MemoryArena *carena = (*arena);
 	StackAllocatorState *state = &carena->state.stackAllocatorState;
 
@@ -178,7 +177,8 @@ void memory_stack_arena_record(MemoryArena **const arena) {
 void memory_stack_arena_unwind(MemoryArena **const arena) {
 	INVARIANT(arena && (*arena), "Cannot record the state of a NULL pointer");
 	INVARIANT((*arena)->allocator_type == STACK, "Only a stack based arena can record its state");
-
+	INVARIANT((*arena)->state.stackAllocatorState.snapshot_count != 0,
+	          "Tried to unwind a stack allocator with no records");
 	MemoryArena *carena = (*arena);
 	StackAllocatorState *state = &carena->state.stackAllocatorState;
 
