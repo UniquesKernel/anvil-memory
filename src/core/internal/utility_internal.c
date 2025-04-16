@@ -15,11 +15,11 @@ void log_and_crash(const char *expr, const char *file, int line, const char *msg
 #ifdef LOG_FILE
 	FILE *log = fopen(LOG_FILE, "a");
 	if (log) {
-		fprintf(log, "[%s] ASSERT_CRASH failed: %s at %s:%d\nMessage: %s\n\n", time_buf, expr, file, line, msg);
+		fprintf(log, "[%s] INVARIANT failed: %s at %s:%d\nMessage: %s\n\n", time_buf, expr, file, line, msg);
 		fclose(log);
 	}
 #else
-	fprintf(stderr, "ASSERT_CRASH failed: %s at %s:%d\nMessage: %s\n", expr, file, line, msg);
+	fprintf(stderr, "INVARIANT failed: %s at %s:%d\nMessage: %s\n", expr, file, line, msg);
 #endif /* ifdef LOG_FILE */
 
 	abort();
@@ -30,9 +30,9 @@ bool is_power_of_two(const size_t x) {
 }
 
 void *safe_aligned_alloc(size_t size, size_t alignment, const char *error_msg) {
-	ASSERT_CRASH(size != 0, "Cannot allocate zero bytes");
-	ASSERT_CRASH(is_power_of_two(alignment), "Alignment must be a power of two");
-	ASSERT_CRASH(alignment <= (1 << 16), "Alignment exceeds limit");
+	INVARIANT(size != 0, "Cannot allocate zero bytes");
+	INVARIANT(is_power_of_two(alignment), "Alignment must be a power of two");
+	INVARIANT(alignment <= (1 << 16), "Alignment exceeds limit");
 
 	size_t page_size = (size_t)sysconf(_SC_PAGESIZE);
 	size_t total_size = size + alignment + sizeof(Metadata);
@@ -41,7 +41,7 @@ void *safe_aligned_alloc(size_t size, size_t alignment, const char *error_msg) {
 
 	void *base = mmap(NULL, total_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
-	ASSERT_CRASH(base != MAP_FAILED, error_msg);
+	INVARIANT(base != MAP_FAILED, error_msg);
 
 	uintptr_t addr = (uintptr_t)base + sizeof(Metadata);
 	uintptr_t aligned_addr = (addr + alignment - 1) & ~(alignment - 1);

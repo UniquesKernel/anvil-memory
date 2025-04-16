@@ -12,7 +12,7 @@
 // automatically invoking cleanup on scope exits.
 #define DEFER(clean_up_func) __attribute__((cleanup(clean_up_func)))
 
-#define ASSERT_CRASH(expr, msg)                                                                                        \
+#define INVARIANT(expr, msg)                                                                                           \
 	do {                                                                                                           \
 		if (!(expr)) {                                                                                         \
 			log_and_crash(#expr, __FILE__, __LINE__, msg);                                                 \
