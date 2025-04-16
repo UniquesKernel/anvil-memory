@@ -44,6 +44,8 @@ MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignmen
 			break;
 		case STACK:
 			arena->state.stackAllocatorState.top = arena->memory_block;
+			arena->state.stackAllocatorState.max_size = INITIAL_STACK_SNAPSHOT_SIZE;
+			arena->state.stackAllocatorState.snapshot_count = 0;
 			arena->state.stackAllocatorState.top->next = NULL;
 			arena->state.stackAllocatorState.snapshots =
 			    malloc(INITIAL_STACK_SNAPSHOT_SIZE * sizeof(Snapshot));
@@ -144,4 +146,54 @@ bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size) {
 			INVARIANT(0, "");
 	}
 	__builtin_unreachable();
+}
+
+void memory_stack_arena_record(MemoryArena **const arena) {
+	INVARIANT(arena && (*arena), "Cannot record the state of a NULL pointer");
+	INVARIANT((*arena)->allocator_type == STACK, "Only a stack based arena can record its state");
+
+	MemoryArena *carena = (*arena);
+	StackAllocatorState *state = &carena->state.stackAllocatorState;
+
+	// Check if we need to resize the snapshots array
+	if (state->snapshot_count == state->max_size) {
+		size_t new_max_size = state->max_size * 2;
+		Snapshot *new_snapshots = realloc(state->snapshots, new_max_size * sizeof(Snapshot));
+
+		INVARIANT(new_snapshots, "Failed to resize snapshot array");
+
+		state->snapshots = new_snapshots;
+		state->max_size = new_max_size;
+	}
+
+	// Add the snapshot directly to the array - no need for temporary allocation
+	Snapshot *current_snapshot = &state->snapshots[state->snapshot_count];
+	current_snapshot->top = state->top;
+	current_snapshot->allocated = state->top->allocated;
+	current_snapshot->capacity = state->top->capacity;
+
+	state->snapshot_count++;
+}
+
+void memory_stack_arena_unwind(MemoryArena **const arena) {
+	INVARIANT(arena && (*arena), "Cannot record the state of a NULL pointer");
+	INVARIANT((*arena)->allocator_type == STACK, "Only a stack based arena can record its state");
+
+	MemoryArena *carena = (*arena);
+	StackAllocatorState *state = &carena->state.stackAllocatorState;
+
+	Snapshot snapshot = state->snapshots[state->snapshot_count - 1];
+	state->top = snapshot.top;
+	state->top->capacity = snapshot.capacity;
+	state->top->allocated = snapshot.allocated;
+	if (snapshot.top->next) {
+		stack_free(snapshot.top->next);
+	}
+	state->top->next = NULL;
+	state->snapshot_count--;
+
+	if (carena->state.stackAllocatorState.snapshot_count < carena->state.stackAllocatorState.max_size / 4) {
+		state->max_size /= 2;
+		state->snapshots = realloc(state->snapshots, state->max_size * sizeof(Snapshot));
+	}
 }

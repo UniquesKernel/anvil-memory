@@ -49,13 +49,15 @@ typedef struct MemoryBlock {
  * ---         | ---                   	| ---
  * top         | MemoryBlock * 		| 4 or 8 Bytes
  * allocated   | size_t                	| 4 or 8 Bytes
+ * capacity    | size_t			| 4 or 8 Bytes
  */
 typedef struct {
 	MemoryBlock *top;    ///< Pointer to the MemoryBlock that was active when the snapshot was taken.
 	size_t allocated;    ///< The number of bytes allocated in the 'top' block at the time of the snapshot.
+	size_t capacity;     ///< The capacity of the top memory block.
 } Snapshot;
 
-static_assert(sizeof(Snapshot) == 8 || sizeof(Snapshot) == 16,
+static_assert(sizeof(Snapshot) == 12 || sizeof(Snapshot) == 24,
               "Snapshot must be either 8 or 16 bytes depending on architecture");
 static_assert(_Alignof(Snapshot) == _Alignof(MemoryBlock *), "Snapshot alignment must match MemoryBlock* alignment");
 
@@ -110,14 +112,17 @@ static_assert(_Alignof(LinearAllocatorState) == _Alignof(int),
  * ---         | ---                   	| ---
  * snapshots   | Snapshot* 		| 4 or 8 Bytes
  * top         | MemoryBlock* 		| 4 or 8 Bytes
+ * snapshot_count | size_t		| 4 or 8 Bytes
  */
 typedef struct {
-	Snapshot *snapshots;    ///< Pointer to an array or linked list of saved Snapshots.
-	MemoryBlock *top;       ///< Pointer to the current MemoryBlock being used for allocations.
+	Snapshot *snapshots;      ///< Pointer to an array or linked list of saved Snapshots.
+	MemoryBlock *top;         ///< Pointer to the current MemoryBlock being used for allocations.
+	size_t snapshot_count;    ///< records the size of the snapshots array.
+	size_t max_size;          ///< maximum size before resizing the snapshot list.
 } StackAllocatorState;
 
-static_assert(sizeof(StackAllocatorState) == 8 || sizeof(StackAllocatorState) == 16,
-              "StackAllocatorState must be either 8 or 16 bytes depending on architecture");
+static_assert(sizeof(StackAllocatorState) == 16 || sizeof(StackAllocatorState) == 32,
+              "StackAllocatorState must be either 16 or 32 bytes depending on architecture");
 static_assert(_Alignof(StackAllocatorState) == _Alignof(MemoryBlock *),
               "StackAllocatorState alignment must match MemoryBlock* alignment");
 
@@ -140,8 +145,8 @@ typedef union {
 	StackAllocatorState stackAllocatorState;        ///< State for the Stack allocator.
 } AllocatorState;
 
-static_assert(sizeof(AllocatorState) == 8 || sizeof(AllocatorState) == 16,
-              "AllocatorState must be either 8 or 16 bytes depending on architecture");
+static_assert(sizeof(AllocatorState) == 16 || sizeof(AllocatorState) == 32,
+              "AllocatorState must be either 16 or 32 bytes depending on architecture");
 static_assert(_Alignof(AllocatorState) == _Alignof(StackAllocatorState),
               "AllocatorState alignment must match its largest member alignment (StackAllocatorState)");
 
@@ -175,8 +180,8 @@ typedef struct memory_arena_t {
 	AllocatorState state;            ///< Allocator specific state.
 } MemoryArena;
 
-static_assert(sizeof(MemoryArena) == 20 || sizeof(MemoryArena) == 40,
-              "MemoryArena must be either 12 or 24 bytes depending on architecture");
+static_assert(sizeof(MemoryArena) == 28 || sizeof(MemoryArena) == 56,
+              "MemoryArena must be either 28 or 56 bytes depending on architecture");
 static_assert(_Alignof(MemoryArena) == _Alignof(MemoryBlock *),
               "Alignment of MemoryArena must match the alignment of a pointer");
 

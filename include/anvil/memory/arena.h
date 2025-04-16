@@ -123,4 +123,7 @@ void *memory_arena_alloc(MemoryArena **const arena, const size_t size);
  */
 [[gnu::pure]]
 bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size);
+
+void memory_stack_arena_record(MemoryArena **const arena);
+void memory_stack_arena_unwind(MemoryArena **const arena);
 #endif    // !ANVIL_MEMORY_ARENA_H
