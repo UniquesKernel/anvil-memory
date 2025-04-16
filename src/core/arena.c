@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 
-#define INITIAL_STACK_SNAPSHOT_SIZE 10
+#define INITIAL_STACK_SNAPSHOT_SIZE 5
 
 MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignment, const size_t initial_size) {
 

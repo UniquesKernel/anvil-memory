@@ -41,7 +41,7 @@ void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size
 	size_t offset = aligned - current;
 	size_t total_size = allocation_size + offset;
 
-	if (total_size <= current_block->capacity - current_block->allocated) {
+	if (likely(total_size <= current_block->capacity - current_block->allocated)) {
 		current_block->allocated += total_size;
 		return (void *)aligned;
 	}

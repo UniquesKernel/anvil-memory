@@ -11,6 +11,8 @@
 // can be used together with functions like free, memory_arena_destroy etc. for
 // automatically invoking cleanup on scope exits.
 #define DEFER(clean_up_func) __attribute__((cleanup(clean_up_func)))
+#define likely(x)            __builtin_expect(!!(x), 1)
+#define unlikely(x)          __builtin_expect(!!(x), 0)
 
 #define INVARIANT(expr, msg)                                                                                           \
 	do {                                                                                                           \
