@@ -4,6 +4,7 @@
 
 void stack_free(MemoryBlock *const memory_block) {
 	INVARIANT(memory_block, "Cannot free Null pointer to memory block");
+	INVARIANT(memory_block->memory, "Cannot free Null pointer to stack memory");
 
 	for (MemoryBlock *current = memory_block, *n; current && (n = current->next, 1); current = n) {
 		safe_aligned_free(current->memory);
@@ -12,6 +13,8 @@ void stack_free(MemoryBlock *const memory_block) {
 }
 
 void stack_reset(MemoryBlock *const memory_block) {
+	INVARIANT(memory_block, "Cannot free Null pointer to memory block");
+
 	memory_block->allocated = 0;
 	if (memory_block->next) {
 		stack_free(memory_block->next);
@@ -28,6 +31,7 @@ void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size
 	INVARIANT(alignment >= _Alignof(max_align_t),
 	          "alignment must be equal to or larger than system minimum alignment");
 	INVARIANT(allocation_size != 0, "Cannot allocate memory of size zero");
+	INVARIANT((*memory_block)->next == NULL, "Stack allocation must happen for the top of the stack");
 
 	MemoryBlock *current_block = (*memory_block);
 
