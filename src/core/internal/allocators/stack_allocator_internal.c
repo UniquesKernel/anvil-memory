@@ -35,31 +35,36 @@ void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size
 
 	MemoryBlock *current_block = (*memory_block);
 
-	while (1) {
-		uintptr_t base = (uintptr_t)current_block->memory;
-		uintptr_t current = base + current_block->allocated;
-		uintptr_t aligned = (current + (alignment - 1)) & ~(uintptr_t)(alignment - 1);
-		size_t offset = aligned - current;
-		size_t total_size = allocation_size + offset;
+	uintptr_t base = (uintptr_t)current_block->memory;
+	uintptr_t current = base + current_block->allocated;
+	uintptr_t aligned = (current + (alignment - 1)) & ~(uintptr_t)(alignment - 1);
+	size_t offset = aligned - current;
+	size_t total_size = allocation_size + offset;
 
-		if (total_size <= current_block->capacity - current_block->allocated) {
-			current_block->allocated += total_size;
-			return (void *)aligned;
-		}
-
-		current_block->next = malloc(sizeof(MemoryBlock));
-		INVARIANT(current_block->next, "System out of memory");
-
-		current_block->next->memory =
-		    safe_aligned_alloc((current_block->capacity << 1), alignment, "Malloc failed");
-		current_block->next->allocated = 0;
-		current_block->next->capacity = (current_block->capacity << 1);
-		current_block->next->next = NULL;
-
-		current_block = current_block->next;
-		*memory_block = current_block;
+	if (total_size <= current_block->capacity - current_block->allocated) {
+		current_block->allocated += total_size;
+		return (void *)aligned;
 	}
-	INVARIANT(0, "Stack Allocator failed to allocate memory");
+
+	MemoryBlock *new_block = malloc(sizeof(MemoryBlock));
+	INVARIANT(new_block, "System out of memory");
+
+	size_t new_capacity = current_block->capacity << 1;
+
+	new_block->memory = safe_aligned_alloc(new_capacity, alignment, "Malloc failed");
+	new_block->allocated = 0;
+	new_block->capacity = new_capacity;
+	new_block->next = NULL;
+
+	current_block->next = new_block;
+	*memory_block = new_block;
+
+	base = (uintptr_t)new_block->memory;
+	aligned = (base + (alignment - 1)) & ~(uintptr_t)(alignment - 1);
+	offset = aligned - base;
+	new_block->allocated = allocation_size + offset;
+
+	return (void *)aligned;
 }
 
 bool stack_alloc_verify(MemoryBlock *const memory_block, const size_t allocation_size, const size_t alignment) {
