@@ -84,7 +84,7 @@ void memory_arena_destroy(MemoryArena **const arena) {
 			break;
 		case COUNT:
 		default:
-			INVARIANT(0, "");
+			INVARIANT(0, "Memory arena tried to reset unexpected arena type");
 	}
 	free(*arena);
 	(*arena) = NULL;
@@ -107,7 +107,7 @@ void memory_arena_reset(MemoryArena **const arena) {
 			return;
 		case COUNT:
 		default:
-			INVARIANT(0, "");
+			INVARIANT(0, "Memory arena tried to reset unexpected arena type");
 	}
 	__builtin_unreachable();
 }
@@ -125,7 +125,7 @@ void *memory_arena_alloc(MemoryArena **const arena, const size_t size) {
 			return stack_alloc(&(*arena)->state.stackAllocatorState.top, size, (*arena)->alignment);
 		case COUNT:
 		default:
-			INVARIANT(0, "");
+			INVARIANT(0, "Memory arena tried to reset unexpected arena type");
 	}
 	__builtin_unreachable();
 }
@@ -148,52 +148,54 @@ bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size) {
 	__builtin_unreachable();
 }
 
-void memory_stack_arena_record(MemoryArena **const arena) {
-	INVARIANT(arena && (*arena), "Cannot record the state of a NULL pointer");
-	INVARIANT((*arena)->allocator_type == STACK, "Only a stack based arena can record its state");
-	MemoryArena *carena = (*arena);
-	StackAllocatorState *state = &carena->state.stackAllocatorState;
+void memory_stack_arena_record(MemoryArena **const memory_arena) {
+	INVARIANT(memory_arena && (*memory_arena), "Cannot record the state of a NULL pointer");
+	INVARIANT((*memory_arena)->allocator_type == STACK, "Only a stack based arena can record its state");
 
-	// Check if we need to resize the snapshots array
-	if (state->snapshot_count == state->max_size) {
-		size_t new_max_size = state->max_size * 2;
-		Snapshot *new_snapshots = realloc(state->snapshots, new_max_size * sizeof(Snapshot));
+	MemoryArena *current_arena = (*memory_arena);
+	StackAllocatorState *stack_state = &current_arena->state.stackAllocatorState;
 
-		INVARIANT(new_snapshots, "Failed to resize snapshot array");
+	if (stack_state->snapshot_count == stack_state->max_size) {
+		size_t expanded_capacity = stack_state->max_size * 2;
+		Snapshot *resized_snapshot_array =
+		    realloc(stack_state->snapshots, expanded_capacity * sizeof(Snapshot));
 
-		state->snapshots = new_snapshots;
-		state->max_size = new_max_size;
+		INVARIANT(resized_snapshot_array, "Failed to resize snapshot array");
+
+		stack_state->snapshots = resized_snapshot_array;
+		stack_state->max_size = expanded_capacity;
 	}
 
-	// Add the snapshot directly to the array - no need for temporary allocation
-	Snapshot *current_snapshot = &state->snapshots[state->snapshot_count];
-	current_snapshot->top = state->top;
-	current_snapshot->allocated = state->top->allocated;
-	current_snapshot->capacity = state->top->capacity;
-
-	state->snapshot_count++;
+	Snapshot *new_snapshot = &stack_state->snapshots[stack_state->snapshot_count];
+	new_snapshot->top = stack_state->top;
+	new_snapshot->allocated = stack_state->top->allocated;
+	new_snapshot->capacity = stack_state->top->capacity;
+	stack_state->snapshot_count++;
 }
 
-void memory_stack_arena_unwind(MemoryArena **const arena) {
-	INVARIANT(arena && (*arena), "Cannot record the state of a NULL pointer");
-	INVARIANT((*arena)->allocator_type == STACK, "Only a stack based arena can record its state");
-	INVARIANT((*arena)->state.stackAllocatorState.snapshot_count != 0,
+void memory_stack_arena_unwind(MemoryArena **const memory_arena) {
+	INVARIANT(memory_arena && (*memory_arena), "Cannot record the state of a NULL pointer");
+	INVARIANT((*memory_arena)->allocator_type == STACK, "Only a stack based arena can record its state");
+	INVARIANT((*memory_arena)->state.stackAllocatorState.snapshot_count != 0,
 	          "Tried to unwind a stack allocator with no records");
-	MemoryArena *carena = (*arena);
-	StackAllocatorState *state = &carena->state.stackAllocatorState;
 
-	Snapshot snapshot = state->snapshots[state->snapshot_count - 1];
-	state->top = snapshot.top;
-	state->top->capacity = snapshot.capacity;
-	state->top->allocated = snapshot.allocated;
-	if (snapshot.top->next) {
-		stack_free(snapshot.top->next);
+	MemoryArena *current_arena = (*memory_arena);
+	StackAllocatorState *stack_state = &current_arena->state.stackAllocatorState;
+	Snapshot target_snapshot = stack_state->snapshots[stack_state->snapshot_count - 1];
+	stack_state->top = target_snapshot.top;
+	stack_state->top->capacity = target_snapshot.capacity;
+	stack_state->top->allocated = target_snapshot.allocated;
+
+	if (target_snapshot.top->next) {
+		stack_free(target_snapshot.top->next);
 	}
-	state->top->next = NULL;
-	state->snapshot_count--;
 
-	if (carena->state.stackAllocatorState.snapshot_count < carena->state.stackAllocatorState.max_size / 4) {
-		state->max_size /= 2;
-		state->snapshots = realloc(state->snapshots, state->max_size * sizeof(Snapshot));
+	stack_state->top->next = NULL;
+	stack_state->snapshot_count--;
+
+	if (current_arena->state.stackAllocatorState.snapshot_count <
+	    current_arena->state.stackAllocatorState.max_size / 4) {
+		stack_state->max_size /= 2;
+		stack_state->snapshots = realloc(stack_state->snapshots, stack_state->max_size * sizeof(Snapshot));
 	}
 }
