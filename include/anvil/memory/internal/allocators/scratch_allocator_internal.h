@@ -47,22 +47,22 @@ void scratch_reset(MemoryBlock *const memory);
 /**
  * @brief Scratch memory allocation strategy for memory allocator.
  *
- * This function will allocate memory from a memory block and return the address to the
- * allocated.
+ * This function will allocate memory from the head memory block of the arena.
+ * Unlike other allocators, scratch allocator will not create new blocks if there
+ * isn't enough space - it will simply return NULL.
  *
  * The function will CRASH (not return an error) if its invariants are violated:
- * - head memory block in the memory block chain is `NULL`.
- * - The blocks memory is `NULL`.
- * - The alignment provided to it is not a power of two.
- * - The alignment is not >= the alignment of `max_align_t`.
+ * - arena is NULL or points to NULL.
+ * - The arena's memory block is NULL.
+ * - The arena's memory block's memory is NULL.
+ * - The arena's alignment is not a power of two.
+ * - The arena's alignment is not >= the alignment of `max_align_t`.
  * - The allocation size is zero.
  *
- * @param [out] `memory` Pointer to the head of the memory block chain to reset.
+ * @param [in,out] `arena` Pointer to the pointer of the memory arena.
  * @param [in] `allocation_size` Amount of memory to allocate from the memory block.
- * @param [in] `alignment` Alignment of the allocated memory.
  *
- * @return Pointer to allocated memory.
- * less than the allocation size.
+ * @return Pointer to allocated memory, or NULL if there isn't enough space.
  *
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
@@ -73,21 +73,20 @@ void *scratch_alloc(MemoryArena **const arena, const size_t allocation_size);
 /**
  * @brief Scratch memory allocation test strategy.
  *
- * This function will traverse a memory block chain and check if any
- * memory block in the chain has enough free memory for an allocation.
- * It returns true if the memory block chain has enough available memory
- * otherwise it returns false.
+ * This function iterates through the memory block chain in the arena and checks if any
+ * block has enough free memory for an allocation of the specified size, taking
+ * alignment requirements into account.
  *
  * The function will CRASH (not return an error) if its invariants are violated:
- * - Memory block is `Null`.
- * - allocation size is not zero.
- * - Alignment is not a power of two.
+ * - arena is NULL.
+ * - arena's memory block is NULL.
+ * - arena's alignment is not a power of two.
+ * - allocation size is zero.
  *
- * @param [in] `block` is the head of the memory block chain to check for available memory.
- * @param [in] `allocation_size` to see if the memory is available in the memory block chain.
- * @param [in] `alignment` of the memory blocks being checked.
+ * @param [in] `arena` The memory arena to check for available memory.
+ * @param [in] `allocation_size` Amount of memory to check for allocation possibility.
  *
- * @return boolean value to see if the memory block chain has the necessary available resources for an allocation.
+ * @return boolean value indicating if the arena has sufficient available space for the allocation.
  */
 [[gnu::pure]]
 bool scratch_alloc_verify(MemoryArena *const arena, const size_t allocation_size);

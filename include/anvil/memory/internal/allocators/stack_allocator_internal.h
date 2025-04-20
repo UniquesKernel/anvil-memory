@@ -46,11 +46,11 @@ void stack_reset(MemoryBlock *const memory_block);
 /**
  * @brief Stack memory allocation strategy for memory allocator.
  *
- * This function attempts to allocate memory from the current top memory block. If there
- * is not enough space in the current block, it creates a new block with doubled capacity,
- * links it as the new top block, and updates the memory_block pointer to point to this
- * new block. This maintains the "stack" behavior where allocations always come from
- * the most recently created block.
+ * This function attempts to allocate memory from the current top memory block.
+ * The memory is properly aligned according to the specified alignment requirement.
+ * If there is not enough space in the current block, it creates a new block with
+ * doubled capacity, links it as the new top block, and updates the memory_block
+ * pointer to point to this new block.
  *
  * The function will CRASH (not return an error) if its invariants are violated:
  * - memory_block pointer is `NULL` or points to `NULL`.
@@ -66,8 +66,8 @@ void stack_reset(MemoryBlock *const memory_block);
  * @param [in] `allocation_size` Amount of memory to allocate from the memory block.
  * @param [in] `alignment` Alignment of the allocated memory.
  *
- * @return Pointer to allocated memory. Unlike scratch_alloc, this function will never
- *         return NULL as it will either allocate from the current block or create a new one.
+ * @return Pointer to aligned allocated memory. Unlike scratch_alloc, this function will
+ *         never return NULL as it will either allocate from the current block or create a new one.
  *
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
@@ -82,6 +82,11 @@ void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size
  * from the current memory block chain. For the stack allocator, this function always
  * returns true because it can dynamically allocate new blocks when needed.
  *
+ * As the implementation shows, the stack allocator is designed to be dynamic and will
+ * always be able to create a new memory block if the current one is insufficient. As a result,
+ * this verification function always returns true, as long as the system has memory
+ * available for the allocator to use.
+ *
  * The function will CRASH (not return an error) if its invariants are violated:
  * - Memory block is `NULL`.
  * - Alignment is not a power of two.
@@ -92,7 +97,8 @@ void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size
  * @param [in] `alignment` Alignment requirement for the potential allocation.
  *
  * @return Always returns true for stack allocator, as it can dynamically grow by
- *         allocating new blocks when needed.
+ *         allocating new blocks when needed. If the system runs out of memory during actual
+ *         allocation, an invariant failure will occur rather than returning false here.
  *
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
