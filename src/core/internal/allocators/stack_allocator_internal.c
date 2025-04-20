@@ -1,10 +1,11 @@
 #include "anvil/memory/internal/allocators/stack_allocator_internal.h"
 #include "anvil/memory/internal/arena_internal.h"
+#include "anvil/memory/internal/error_templates.h"
 #include "anvil/memory/internal/utility_internal.h"
 
 void stack_free(MemoryBlock *const memory_block) {
-	INVARIANT(memory_block, "Cannot free Null pointer to memory block");
-	INVARIANT(memory_block->memory, "Cannot free Null pointer to stack memory");
+	INVARIANT(memory_block, ERR_NULL_POINTER, "memory_block");
+	INVARIANT(memory_block->memory, ERR_NULL_POINTER, "memory_block->memory");
 
 	for (MemoryBlock *current = memory_block, *n; current && (n = current->next, 1); current = n) {
 		safe_aligned_free(current->memory);
@@ -13,7 +14,7 @@ void stack_free(MemoryBlock *const memory_block) {
 }
 
 void stack_reset(MemoryBlock *const memory_block) {
-	INVARIANT(memory_block, "Cannot free Null pointer to memory block");
+	INVARIANT(memory_block, ERR_NULL_POINTER, "memory_block");
 
 	memory_block->allocated = 0;
 	if (memory_block->next) {
@@ -25,13 +26,13 @@ void stack_reset(MemoryBlock *const memory_block) {
 }
 
 void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size, const size_t alignment) {
-	INVARIANT(memory_block && (*memory_block), "Cannot allocate memory from a null pointer");
-	INVARIANT((*memory_block)->memory, "Cannot allocate memory from null pointer to memory");
-	INVARIANT(is_power_of_two(alignment), "memory alignment on allocation must be a power of two");
-	INVARIANT(alignment >= _Alignof(max_align_t),
-	          "alignment must be equal to or larger than system minimum alignment");
-	INVARIANT(allocation_size != 0, "Cannot allocate memory of size zero");
-	INVARIANT((*memory_block)->next == NULL, "Stack allocation must happen from the top of the stack");
+	INVARIANT(memory_block && (*memory_block), ERR_NULL_POINTER, "memory_block");
+	INVARIANT((*memory_block)->memory, ERR_NULL_POINTER, "memory_block->memory");
+	INVARIANT(is_power_of_two(alignment), ERR_ALLOC_ALIGNMENT_NOT_POWER_OF_TWO, alignment);
+	INVARIANT(alignment >= _Alignof(max_align_t), ERR_ALIGNMENT_TOO_SMALL, alignment, _Alignof(max_align_t));
+	INVARIANT(allocation_size != 0, ERR_ALLOC_SIZE_ZERO);
+	INVARIANT((*memory_block)->next == NULL, ERR_OPERATION_INVALID_FOR_STATE, "allocation", "stack",
+	          "intermediate block");
 
 	MemoryBlock *current_block = (*memory_block);
 
@@ -47,11 +48,11 @@ void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size
 	}
 
 	MemoryBlock *new_block = malloc(sizeof(MemoryBlock));
-	INVARIANT(new_block, "System out of memory");
+	INVARIANT(new_block, ERR_OUT_OF_MEMORY, sizeof(MemoryBlock));
 
 	size_t new_capacity = current_block->capacity << 1;
 
-	new_block->memory = safe_aligned_alloc(new_capacity, alignment, "System out of Memory");
+	new_block->memory = safe_aligned_alloc(new_capacity, alignment);
 	new_block->allocated = 0;
 	new_block->capacity = new_capacity;
 	new_block->next = NULL;
@@ -68,9 +69,9 @@ void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size
 }
 
 bool stack_alloc_verify(MemoryBlock *const memory_block, const size_t allocation_size, const size_t alignment) {
-	INVARIANT(memory_block, "Cannot verify available memory for NULL pointer");
-	INVARIANT(is_power_of_two(alignment), "Memory Blocks must have a power of two alignment");
-	INVARIANT(allocation_size != 0, "cannot allocate zero memory");
+	INVARIANT(memory_block, ERR_NULL_POINTER, "memory_block");
+	INVARIANT(is_power_of_two(alignment), ERR_ALLOC_ALIGNMENT_NOT_POWER_OF_TWO, alignment);
+	INVARIANT(allocation_size != 0, ERR_ALLOC_SIZE_ZERO);
 
 	/*
 	 * NOTE:(UniquesKernel) Because the memory allocation is dynamic it should always return true

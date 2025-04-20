@@ -14,10 +14,10 @@
 #define likely(x)            __builtin_expect(!!(x), 1)
 #define unlikely(x)          __builtin_expect(!!(x), 0)
 
-#define INVARIANT(expr, msg)                                                                                           \
+#define INVARIANT(expr, fmt, ...)                                                                                      \
 	do {                                                                                                           \
 		if (!(expr)) {                                                                                         \
-			log_and_crash(#expr, __FILE__, __LINE__, msg);                                                 \
+			log_and_crash(#expr, __FILE__, __LINE__, fmt, ##__VA_ARGS__);                                  \
 		}                                                                                                      \
 	} while (0)
 
@@ -63,10 +63,10 @@ static_assert(_Alignof(Metadata) == _Alignof(void *), "should have the natural a
  * @param[in] `file` filename for where a failure occured.
  * @param[in] `line` line that failed.
  * @param[in] `error_msg` error message to log.
- *
+ * @param[in] ... formating arguments.
  */
 [[gnu::noreturn]]
-void log_and_crash(const char *expr, const char *file, int line, const char *msg);
+void log_and_crash(const char *expr, const char *file, int line, const char *fmt, ...);
 
 /**
  * @brief Allocates an aligned block of memory.
@@ -81,14 +81,13 @@ void log_and_crash(const char *expr, const char *file, int line, const char *msg
  *
  * @param[in] `size` of the allocation.
  * @param[in] `alignment` of the allocated memory.
- * @param[in] `error_msg` error message if the allocation fails.
  * @returns Pointer to allocated memory.
  *
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
 [[gnu::malloc]]
-void *safe_aligned_alloc(const size_t size, const size_t alignment, const char *error_msg);
+void *safe_aligned_alloc(const size_t size, const size_t alignment);
 
 [[gnu::pure]]
 bool is_power_of_two(const size_t x);

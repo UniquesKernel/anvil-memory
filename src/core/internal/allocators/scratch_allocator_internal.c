@@ -1,6 +1,7 @@
 #include "anvil/memory/internal/allocators/scratch_allocator_internal.h"
 #include "anvil/memory/arena.h"
 #include "anvil/memory/internal/arena_internal.h"
+#include "anvil/memory/internal/error_templates.h"
 #include "anvil/memory/internal/utility_internal.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -12,8 +13,7 @@
  * ***************************************************************************************************/
 
 void scratch_free(MemoryBlock *const memory) {
-	INVARIANT(memory, "Cannot free Null pointer to memory block");
-
+	INVARIANT(memory, ERR_NULL_POINTER, "memory");
 	for (MemoryBlock *current = memory, *n; current && (n = current->next, 1); current = n) {
 		safe_aligned_free(current->memory);
 		free(current);
@@ -21,7 +21,7 @@ void scratch_free(MemoryBlock *const memory) {
 }
 
 void scratch_reset(MemoryBlock *const memory) {
-	INVARIANT(memory, "Cannot reset Null pointer to memory block");
+	INVARIANT(memory, ERR_NULL_POINTER, "memory");
 
 	memory->allocated = 0;
 	if (memory->next) {
@@ -31,13 +31,13 @@ void scratch_reset(MemoryBlock *const memory) {
 }
 
 void *scratch_alloc(MemoryArena **const arena, const size_t allocation_size) {
-	INVARIANT(arena && (*arena), "Cannot allocate from NULL arena pointer");
-	INVARIANT((*arena)->memory_block, "Cannot allocate memory from a null pointer");
-	INVARIANT((*arena)->memory_block->memory, "Cannot allocate memory from null pointer to memory");
-	INVARIANT(is_power_of_two((*arena)->alignment), "memory alignment on allocation must be a power of two");
-	INVARIANT((*arena)->alignment >= _Alignof(max_align_t),
-	          "alignment must be equal to or larger than system minimum alignment");
-	INVARIANT(allocation_size != 0, "Cannot allocate memory of size zero");
+	INVARIANT(arena && (*arena), ERR_NULL_POINTER, "arena");
+	INVARIANT((*arena)->memory_block, ERR_NULL_POINTER, "arena->memory_block");
+	INVARIANT((*arena)->memory_block->memory, ERR_NULL_POINTER, "arena->memory_block->memory");
+	INVARIANT(is_power_of_two((*arena)->alignment), ERR_ALLOC_ALIGNMENT_NOT_POWER_OF_TWO, (*arena)->alignment);
+	INVARIANT((*arena)->alignment >= _Alignof(max_align_t), ERR_ALIGNMENT_TOO_SMALL, (*arena)->alignment,
+	          _Alignof(max_align_t));
+	INVARIANT(allocation_size != 0, ERR_ALLOC_SIZE_ZERO);
 
 	uintptr_t base = (uintptr_t)(*arena)->memory_block->memory;
 	uintptr_t current = base + (*arena)->memory_block->allocated;
@@ -55,10 +55,10 @@ void *scratch_alloc(MemoryArena **const arena, const size_t allocation_size) {
 }
 
 bool scratch_alloc_verify(MemoryArena *const arena, const size_t allocation_size) {
-	INVARIANT(arena, "Cannot verify allocation on NULL arena");
-	INVARIANT(arena->memory_block, "Cannot verify available memory for NULL pointer");
-	INVARIANT(is_power_of_two(arena->alignment), "Memory Blocks must have a power of two alignment");
-	INVARIANT(allocation_size != 0, "cannot allocate zero memory");
+	INVARIANT(arena, ERR_NULL_POINTER, "arena");
+	INVARIANT(arena->memory_block, ERR_NULL_POINTER, "arena->memory_block");
+	INVARIANT(is_power_of_two(arena->alignment), ERR_ALLOC_ALIGNMENT_NOT_POWER_OF_TWO, arena->alignment);
+	INVARIANT(allocation_size != 0, ERR_ALLOC_SIZE_ZERO);
 
 	for (MemoryBlock *current = arena->memory_block; current != NULL; current = current->next) {
 		uintptr_t base = (uintptr_t)current->memory;

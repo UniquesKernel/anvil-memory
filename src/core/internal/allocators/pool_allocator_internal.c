@@ -1,11 +1,12 @@
 #include "anvil/memory/internal/allocators/pool_allocator_internal.h"
 #include "anvil/memory/arena.h"
 #include "anvil/memory/internal/arena_internal.h"
+#include "anvil/memory/internal/error_templates.h"
 #include "anvil/memory/internal/utility_internal.h"
 #include <stddef.h>
 
 void pool_free(MemoryBlock *const memory_block) {
-	INVARIANT(memory_block, "Cannot free NULL memory block");
+	INVARIANT(memory_block, ERR_NULL_POINTER, "memory_block");
 
 	for (MemoryBlock *current = memory_block, *n; current && (n = current->next, 1); current = n) {
 		safe_aligned_free(current->memory);
@@ -14,7 +15,7 @@ void pool_free(MemoryBlock *const memory_block) {
 }
 
 void pool_reset(MemoryBlock *const memory_block) {
-	INVARIANT(memory_block, "Cannot reset NULL memory block");
+	INVARIANT(memory_block, ERR_NULL_POINTER, "memory_block");
 	memory_block->allocated = 0;
 	if (memory_block->next) {
 		pool_free(memory_block->next);
@@ -23,13 +24,13 @@ void pool_reset(MemoryBlock *const memory_block) {
 }
 
 void *pool_alloc(MemoryArena **const arena, const size_t allocation_size) {
-	INVARIANT(arena && (*arena), "Cannot allocate from NULL arena");
-	INVARIANT((*arena)->memory_block, "Cannot allocate memory from a null pointer");
-	INVARIANT((*arena)->memory_block->memory, "Cannot allocate memory from null pointer to memory");
-	INVARIANT(is_power_of_two((*arena)->alignment), "memory alignment on allocation must be a power of two");
-	INVARIANT((*arena)->alignment >= _Alignof(max_align_t),
-	          "alignment must be equal to or larger than system minimum alignment");
-	INVARIANT(allocation_size != 0, "Cannot allocate memory of size zero");
+	INVARIANT(arena && (*arena), ERR_NULL_POINTER, "arena");
+	INVARIANT((*arena)->memory_block, ERR_NULL_POINTER, "arena->memory_block");
+	INVARIANT((*arena)->memory_block->memory, ERR_NULL_POINTER, "arena->memory_block->memory");
+	INVARIANT(is_power_of_two((*arena)->alignment), ERR_ALLOC_ALIGNMENT_NOT_POWER_OF_TWO, (*arena)->alignment);
+	INVARIANT((*arena)->alignment >= _Alignof(max_align_t), ERR_ALIGNMENT_TOO_SMALL, (*arena)->alignment,
+	          _Alignof(max_align_t));
+	INVARIANT(allocation_size != 0, ERR_ALLOC_SIZE_ZERO);
 
 	MemoryBlock *current_block = (*arena)->memory_block;
 	size_t alignment = (*arena)->alignment;
@@ -56,10 +57,9 @@ void *pool_alloc(MemoryArena **const arena, const size_t allocation_size) {
 
 		if (!current_block->next) {
 			current_block->next = malloc(sizeof(MemoryBlock));
-			INVARIANT(current_block->next, "System out of memory");
+			INVARIANT(current_block->next, ERR_OUT_OF_MEMORY, sizeof(MemoryBlock));
 
-			current_block->next->memory =
-			    safe_aligned_alloc((current_block->capacity << 1), alignment, "System out of memory");
+			current_block->next->memory = safe_aligned_alloc((current_block->capacity << 1), alignment);
 			current_block->next->allocated = 0;
 			current_block->next->capacity = (current_block->capacity << 1);
 			current_block->next->next = NULL;
@@ -71,9 +71,9 @@ void *pool_alloc(MemoryArena **const arena, const size_t allocation_size) {
 }
 
 bool pool_alloc_verify(MemoryArena *const arena, const size_t allocation_size) {
-	INVARIANT(arena, "Cannot verify allocation for NULL arena");
-	INVARIANT(arena->memory_block, "Cannot verify allocation for NULL memory block");
-	INVARIANT(is_power_of_two(arena->alignment), "Alignment must be a power of two");
-	INVARIANT(allocation_size != 0, "Cannot verify allocation of size zero");
+	INVARIANT(arena, ERR_NULL_POINTER, "arena");
+	INVARIANT(arena->memory_block, ERR_NULL_POINTER, "arena->memory_block");
+	INVARIANT(is_power_of_two(arena->alignment), ERR_ALLOC_ALIGNMENT_NOT_POWER_OF_TWO, arena->alignment);
+	INVARIANT(allocation_size != 0, ERR_ALLOC_SIZE_ZERO);
 	return true;
 }
