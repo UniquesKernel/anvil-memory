@@ -1,5 +1,6 @@
 #include "anvil/memory/arena.h"
 #include "anvil/memory/internal/allocators/linear_allocator_internal.h"
+#include "anvil/memory/internal/allocators/pool_allocator_internal.h"
 #include "anvil/memory/internal/allocators/scratch_allocator_internal.h"
 #include "anvil/memory/internal/allocators/stack_allocator_internal.h"
 #include "anvil/memory/internal/arena_internal.h"
@@ -51,6 +52,9 @@ MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignmen
 			    malloc(INITIAL_STACK_SNAPSHOT_SIZE * sizeof(Snapshot));
 			INVARIANT(arena->state.stackAllocatorState.snapshots, "");
 			break;
+		case POOL:
+			arena->state.poolAllocatorState = (PoolAllocatorState){.pool_size = initial_size};
+			break;
 		case COUNT:
 		default:
 			INVARIANT(0, "Failed to initialize arena state");
@@ -82,6 +86,9 @@ void memory_arena_destroy(MemoryArena **const arena) {
 			free((*arena)->state.stackAllocatorState.snapshots);
 			stack_free((*arena)->memory_block);
 			break;
+		case POOL:
+			pool_free((*arena)->memory_block);
+			break;
 		case COUNT:
 		default:
 			INVARIANT(0, "Memory arena tried to reset unexpected arena type");
@@ -105,6 +112,9 @@ void memory_arena_reset(MemoryArena **const arena) {
 			stack_reset((*arena)->memory_block);
 			(*arena)->state.stackAllocatorState.top = (*arena)->memory_block;
 			return;
+		case POOL:
+			pool_reset((*arena)->memory_block);
+			return;
 		case COUNT:
 		default:
 			INVARIANT(0, "Memory arena tried to reset unexpected arena type");
@@ -118,11 +128,13 @@ void *memory_arena_alloc(MemoryArena **const arena, const size_t size) {
 
 	switch ((*arena)->allocator_type) {
 		case SCRATCH:
-			return scratch_alloc((*arena)->memory_block, size, (*arena)->alignment);
+			return scratch_alloc(arena, size);
 		case LINEAR:
-			return linear_alloc((*arena)->memory_block, size, (*arena)->alignment);
+			return linear_alloc(arena, size);
 		case STACK:
 			return stack_alloc(&(*arena)->state.stackAllocatorState.top, size, (*arena)->alignment);
+		case POOL:
+			return pool_alloc(arena, size);
 		case COUNT:
 		default:
 			INVARIANT(0, "Memory arena tried to reset unexpected arena type");
@@ -136,11 +148,13 @@ bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size) {
 
 	switch (arena->allocator_type) {
 		case SCRATCH:
-			return scratch_alloc_verify(arena->memory_block, size, arena->alignment);
+			return scratch_alloc_verify(arena, size);
 		case LINEAR:
-			return linear_alloc_verify(arena->memory_block, size, arena->alignment);
+			return linear_alloc_verify(arena, size);
 		case STACK:
 			return stack_alloc_verify(arena->state.stackAllocatorState.top, size, arena->alignment);
+		case POOL:
+			return pool_alloc_verify(arena, size);
 		case COUNT:
 		default:
 			INVARIANT(0, "");

@@ -1,6 +1,7 @@
 #ifndef ANVIL_MEMORY_SCRATCH_ALLOCATOR_INTERNAL_H
 #define ANVIL_MEMORY_SCRATCH_ALLOCATOR_INTERNAL_H
 
+#include "anvil/memory/arena.h"
 #include "anvil/memory/internal/arena_internal.h"
 #include <stddef.h>
 #include <sys/cdefs.h>
@@ -67,7 +68,7 @@ void scratch_reset(MemoryBlock *const memory);
  *       diagnostics rather than returning error codes.
  */
 [[gnu::malloc, gnu::warn_unused_result]]
-void *scratch_alloc(MemoryBlock *block, const size_t allocation_size, const size_t alignment);
+void *scratch_alloc(MemoryArena **const arena, const size_t allocation_size);
 
 /**
  * @brief Scratch memory allocation test strategy.
@@ -89,6 +90,6 @@ void *scratch_alloc(MemoryBlock *block, const size_t allocation_size, const size
  * @return boolean value to see if the memory block chain has the necessary available resources for an allocation.
  */
 [[gnu::pure]]
-bool scratch_alloc_verify(MemoryBlock *const block, const size_t allocation_size, const size_t alignment);
+bool scratch_alloc_verify(MemoryArena *const arena, const size_t allocation_size);
 
 #endif    // !MEMORY_ARENA_SCRATCH_ALLOCATOR_INTERNAL_H

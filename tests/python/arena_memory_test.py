@@ -17,7 +17,8 @@ class AllocatorType(IntEnum):
     SCRATCH = 0
     LINEAR = 1
     STACK = 2
-    # COUNT = 3
+    POOL = 3
+    # COUNT = 4
 
 lib.memory_arena_create.argtypes = [
     ctypes.c_int,

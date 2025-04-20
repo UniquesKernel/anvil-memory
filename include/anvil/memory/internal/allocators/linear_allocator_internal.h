@@ -1,6 +1,7 @@
 #ifndef ANVIL_MEMORY_ALLOCATOR_linear_INTERL_H
 #define ANVIL_MEMORY_ALLOCATOR_linear_INTERL_H
 
+#include "anvil/memory/arena.h"
 #include "anvil/memory/internal/arena_internal.h"
 
 /*****************************************************************************************************
@@ -68,7 +69,7 @@ void linear_reset(MemoryBlock *const memory);
  *       diagnostics rather than returning error codes.
  */
 [[gnu::malloc, gnu::warn_unused_result]]
-void *linear_alloc(MemoryBlock *block, const size_t allocation_size, const size_t alignment);
+void *linear_alloc(MemoryArena **const arena, const size_t allocation_size);
 
 /**
  * @brief Linear memory allocation test strategy.
@@ -94,6 +95,6 @@ void *linear_alloc(MemoryBlock *block, const size_t allocation_size, const size_
  * @return boolean value to see if the memory block chain has the necessary available resources for an allocation.
  */
 [[gnu::pure]]
-bool linear_alloc_verify(MemoryBlock *const block, const size_t allocation_size, const size_t alignment);
+bool linear_alloc_verify(MemoryArena *const arena, const size_t allocation_size);
 
 #endif    // ANVIL_MEMORY_ALLOCATOR_linear_INTERL_H

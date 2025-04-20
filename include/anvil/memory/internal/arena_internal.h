@@ -126,6 +126,15 @@ static_assert(sizeof(StackAllocatorState) == 16 || sizeof(StackAllocatorState) =
 static_assert(_Alignof(StackAllocatorState) == _Alignof(MemoryBlock *),
               "StackAllocatorState alignment must match MemoryBlock* alignment");
 
+typedef struct {
+	size_t pool_size;
+} PoolAllocatorState;
+
+static_assert(sizeof(PoolAllocatorState) == 4 || sizeof(PoolAllocatorState) == 8,
+              "PoolAllocatorState must be either 4 or 8 bytes depending on architecture");
+static_assert(_Alignof(PoolAllocatorState) == _Alignof(size_t),
+              "PoolAllocatorState alignment must match size_t alignment");
+
 /**
  * @brief A union holding the state specific to the chosen allocator type.
  *
@@ -137,11 +146,13 @@ static_assert(_Alignof(StackAllocatorState) == _Alignof(MemoryBlock *),
  * ---                    | ---                   | ---
  * scratchAllocatorState  | ScratchAllocatorState | 4 or 8 Bytes
  * linearAllocatorState   | LinearAllocatorState  | 4 or 8 Bytes
+ * poolAllocatorState     | PoolAllocatorState    | 4 or 8 Bytes
  * stackAllocatorState    | StackAllocatorState   | 8 or 16 Bytes
  */
 typedef union {
 	ScratchAllocatorState scratchAllocatorState;    ///< State for the Scratch allocator.
 	LinearAllocatorState linearAllocatorState;      ///< State for the Linear allocator.
+	PoolAllocatorState poolAllocatorState;          ///< State for the Pool alllocator.
 	StackAllocatorState stackAllocatorState;        ///< State for the Stack allocator.
 } AllocatorState;
 

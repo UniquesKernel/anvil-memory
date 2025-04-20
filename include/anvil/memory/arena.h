@@ -12,6 +12,7 @@ typedef enum allocator_type_t {
 	SCRATCH = 0,    ///< Scratch allocation strategy.
 	LINEAR = 1,     ///< Linear allocation strategy.
 	STACK = 2,      ///< Stack allocation strategy.
+	POOL = 3,       ///< Pool allocation strategy.
 	COUNT           ///< Total count of allocators.
 } AllocatorType;
 

@@ -72,6 +72,7 @@ void stack_reset(MemoryBlock *const memory_block);
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
+[[gnu::malloc, gnu::warn_unused_result]]
 void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size, const size_t alignment);
 
 /**
