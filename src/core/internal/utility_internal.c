@@ -9,8 +9,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LOG_FILE "/tmp/invariant_error.log"
-
 // In utility_internal.c
 void log_and_crash(const char *expr, const char *file, int line, const char *fmt, ...) {
 	// Get the current time

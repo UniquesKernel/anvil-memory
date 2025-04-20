@@ -168,4 +168,54 @@ void memory_stack_arena_record(MemoryArena **const arena);
  *       Pointers to this memory should be considered invalid after unwinding.
  */
 void memory_stack_arena_unwind(MemoryArena **const arena);
+
+/**
+ * @brief Moves memory from an external pointer into an arena allocation.
+ *
+ * This function transfers ownership of externally allocated memory into the arena system.
+ * It allocates arena memory, copies the content, frees the original memory, and sets the
+ * source pointer to NULL to prevent use-after-free errors.
+ *
+ * The function will CRASH (not return an error) if its invariants are violated:
+ * - arena is `NULL` or points to `NULL`.
+ * - src is `NULL` or points to `NULL`.
+ * - free_fptr is `NULL`.
+ * - size is zero.
+ *
+ * @param[in,out] arena Pointer to the pointer of the arena to allocate from.
+ * @param[in,out] src Pointer to the source memory pointer, will be set to NULL after freeing.
+ * @param[in] size Amount of memory to copy from source to arena.
+ * @param[in] free_fptr Function pointer used to free the source memory.
+ *
+ * @return Pointer to the newly allocated memory in the arena, or NULL if arena allocation fails.
+ *
+ * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
+ *       diagnostics rather than returning error codes.
+ * @note This function is **NOT** thread safe and shouldn't be used in a concurrent context.
+ */
+void *memory_arena_move(MemoryArena **const arena, void **src, const size_t size, void (*free_fptr)(void *));
+
+/**
+ * @brief Copies memory from an external pointer into an arena allocation.
+ *
+ * This function duplicates data from an external source into arena-managed memory.
+ * The original memory remains untouched and the caller retains ownership of it.
+ *
+ * The function will CRASH (not return an error) if its invariants are violated:
+ * - arena is `NULL` or points to `NULL`.
+ * - src is `NULL`.
+ * - size is zero.
+ *
+ * @param[in,out] arena Pointer to the pointer of the arena to allocate from.
+ * @param[in] src Pointer to the source memory to be copied.
+ * @param[in] size Amount of memory to copy from source to arena.
+ *
+ * @return Pointer to the newly allocated memory in the arena, or NULL if arena allocation fails.
+ *
+ * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
+ *       diagnostics rather than returning error codes.
+ * @note This function is **NOT** thread safe and shouldn't be used in a concurrent context.
+ */
+void *memory_arena_copy(MemoryArena **const arena, const void *const src, const size_t size);
+
 #endif    // !ANVIL_MEMORY_ARENA_H

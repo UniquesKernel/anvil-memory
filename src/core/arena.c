@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 
 #define INITIAL_STACK_SNAPSHOT_SIZE 5
@@ -232,4 +233,39 @@ void memory_stack_arena_unwind(MemoryArena **const memory_arena) {
 		stack_state->max_size /= 2;
 		stack_state->snapshots = realloc(stack_state->snapshots, stack_state->max_size * sizeof(Snapshot));
 	}
+}
+
+void *memory_arena_move(MemoryArena **const arena, void **const src, const size_t size, void (*free_fptr)(void *)) {
+	INVARIANT(arena && (*arena), ERR_NULL_POINTER, "arena");
+	INVARIANT(src && (*src), ERR_NULL_POINTER, "src");
+	INVARIANT(free_fptr, ERR_NULL_POINTER, "free function pointer");
+	INVARIANT(size != 0, ERR_ALLOC_SIZE_ZERO);
+
+	void *dest = memory_arena_alloc(arena, size);
+	if (!dest) {
+		return NULL;
+	}
+
+	memcpy(dest, *src, size);
+
+	memset(*src, 0x0, size);
+	free_fptr(*src);
+	*src = NULL;
+
+	return dest;
+}
+
+void *memory_arena_copy(MemoryArena **const arena, const void *const src, const size_t size) {
+	INVARIANT(arena && (*arena), ERR_NULL_POINTER, "arena");
+	INVARIANT(src, ERR_NULL_POINTER, "src");
+	INVARIANT(size != 0, ERR_ALLOC_SIZE_ZERO);
+
+	void *dest = memory_arena_alloc(arena, size);
+	if (!dest) {
+		return NULL;
+	}
+
+	memcpy(dest, src, size);
+
+	return dest;
 }
