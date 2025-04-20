@@ -1,9 +1,11 @@
 #include "anvil/memory/internal/allocators/pool_allocator_internal.h"
 #include "anvil/memory/arena.h"
+#include "anvil/memory/internal/allocation/memory_allocation_internal.h"
 #include "anvil/memory/internal/arena_internal.h"
 #include "anvil/memory/internal/error_templates.h"
 #include "anvil/memory/internal/utility_internal.h"
 #include <stddef.h>
+#include <stdlib.h>
 
 void pool_free(MemoryBlock *const memory_block) {
 	INVARIANT(memory_block, ERR_NULL_POINTER, "memory_block");
