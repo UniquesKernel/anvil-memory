@@ -3,8 +3,11 @@
 #include <anvil/memory/internal/error_templates.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
+
+#define MEMORY_POISON_PATTERN xDEADC0DE
 
 void *safe_aligned_alloc(size_t size, size_t alignment) {
 	INVARIANT(size != 0, ERR_ALLOC_SIZE_ZERO);
@@ -43,7 +46,13 @@ void safe_aligned_free(void *ptr) {
 
 	Metadata *metadata = (Metadata *)((uintptr_t)ptr - sizeof(Metadata));
 
-	if (metadata->base != NULL) {
-		munmap(metadata->base, metadata->total_size);
-	}
+	INVARIANT(metadata->base != NULL, ERR_NULL_POINTER, "metadata->base");
+	INVARIANT(metadata->total_size > 0, ERR_VALUE_MIN, "metadata->total_size", 1, metadata->total_size);
+
+#ifdef DEBUG
+	memset(metadata->base, MEMORY_POISON_PATTERN, metadata->total_size);
+#else
+	memset(metadata->base, 0x0, metadata->total_size);
+#endif
+	munmap(metadata->base, metadata->total_size);
 }
