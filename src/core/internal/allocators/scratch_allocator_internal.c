@@ -31,7 +31,7 @@ void scratch_reset(MemoryBlock *const memory) {
 }
 
 void *scratch_alloc(MemoryArena **const arena, const size_t allocation_size) {
-	INVARIANT(arena && (*arena), "");
+	INVARIANT(arena && (*arena), "Cannot allocate from NULL arena pointer");
 	INVARIANT((*arena)->memory_block, "Cannot allocate memory from a null pointer");
 	INVARIANT((*arena)->memory_block->memory, "Cannot allocate memory from null pointer to memory");
 	INVARIANT(is_power_of_two((*arena)->alignment), "memory alignment on allocation must be a power of two");
@@ -55,7 +55,7 @@ void *scratch_alloc(MemoryArena **const arena, const size_t allocation_size) {
 }
 
 bool scratch_alloc_verify(MemoryArena *const arena, const size_t allocation_size) {
-	INVARIANT(arena, "");
+	INVARIANT(arena, "Cannot verify allocation on NULL arena");
 	INVARIANT(arena->memory_block, "Cannot verify available memory for NULL pointer");
 	INVARIANT(is_power_of_two(arena->alignment), "Memory Blocks must have a power of two alignment");
 	INVARIANT(allocation_size != 0, "cannot allocate zero memory");

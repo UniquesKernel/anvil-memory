@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 void pool_free(MemoryBlock *const memory_block) {
-	INVARIANT(memory_block, "");
+	INVARIANT(memory_block, "Cannot free NULL memory block");
 
 	for (MemoryBlock *current = memory_block, *n; current && (n = current->next, 1); current = n) {
 		safe_aligned_free(current->memory);
@@ -14,7 +14,7 @@ void pool_free(MemoryBlock *const memory_block) {
 }
 
 void pool_reset(MemoryBlock *const memory_block) {
-	INVARIANT(memory_block, "");
+	INVARIANT(memory_block, "Cannot reset NULL memory block");
 	memory_block->allocated = 0;
 	if (memory_block->next) {
 		pool_free(memory_block->next);
@@ -23,7 +23,7 @@ void pool_reset(MemoryBlock *const memory_block) {
 }
 
 void *pool_alloc(MemoryArena **const arena, const size_t allocation_size) {
-	INVARIANT(arena && (*arena), "");
+	INVARIANT(arena && (*arena), "Cannot allocate from NULL arena");
 	INVARIANT((*arena)->memory_block, "Cannot allocate memory from a null pointer");
 	INVARIANT((*arena)->memory_block->memory, "Cannot allocate memory from null pointer to memory");
 	INVARIANT(is_power_of_two((*arena)->alignment), "memory alignment on allocation must be a power of two");
@@ -59,7 +59,7 @@ void *pool_alloc(MemoryArena **const arena, const size_t allocation_size) {
 			INVARIANT(current_block->next, "System out of memory");
 
 			current_block->next->memory =
-			    safe_aligned_alloc((current_block->capacity << 1), alignment, "Malloc failed");
+			    safe_aligned_alloc((current_block->capacity << 1), alignment, "System out of memory");
 			current_block->next->allocated = 0;
 			current_block->next->capacity = (current_block->capacity << 1);
 			current_block->next->next = NULL;
@@ -71,10 +71,9 @@ void *pool_alloc(MemoryArena **const arena, const size_t allocation_size) {
 }
 
 bool pool_alloc_verify(MemoryArena *const arena, const size_t allocation_size) {
-	INVARIANT(arena, "");
-	INVARIANT(arena->memory_block, "");
-	INVARIANT(is_power_of_two(arena->alignment), "");
-	INVARIANT(allocation_size != 0, "");
-
+	INVARIANT(arena, "Cannot verify allocation for NULL arena");
+	INVARIANT(arena->memory_block, "Cannot verify allocation for NULL memory block");
+	INVARIANT(is_power_of_two(arena->alignment), "Alignment must be a power of two");
+	INVARIANT(allocation_size != 0, "Cannot verify allocation of size zero");
 	return true;
 }

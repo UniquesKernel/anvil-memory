@@ -31,7 +31,7 @@ void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size
 	INVARIANT(alignment >= _Alignof(max_align_t),
 	          "alignment must be equal to or larger than system minimum alignment");
 	INVARIANT(allocation_size != 0, "Cannot allocate memory of size zero");
-	INVARIANT((*memory_block)->next == NULL, "Stack allocation must happen for the top of the stack");
+	INVARIANT((*memory_block)->next == NULL, "Stack allocation must happen from the top of the stack");
 
 	MemoryBlock *current_block = (*memory_block);
 
@@ -51,7 +51,7 @@ void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size
 
 	size_t new_capacity = current_block->capacity << 1;
 
-	new_block->memory = safe_aligned_alloc(new_capacity, alignment, "Malloc failed");
+	new_block->memory = safe_aligned_alloc(new_capacity, alignment, "System out of Memory");
 	new_block->allocated = 0;
 	new_block->capacity = new_capacity;
 	new_block->next = NULL;

@@ -15,17 +15,14 @@
 #define INITIAL_STACK_SNAPSHOT_SIZE 5
 
 MemoryArena *memory_arena_create(const AllocatorType type, const size_t alignment, const size_t initial_size) {
-
 	INVARIANT(is_power_of_two(alignment), "alignment must be a power of two!");
 	INVARIANT(type != COUNT, "Count is not a valid allocator type");
 	INVARIANT(initial_size != 0, "Cannot initialize zero sized memory arenas");
 
 	MemoryArena *arena = malloc(sizeof(*arena));
-
 	INVARIANT(arena != NULL, "System out of memory");
 
 	arena->memory_block = malloc(sizeof(*arena->memory_block));
-
 	INVARIANT(arena->memory_block != NULL, "System out of memory");
 
 	arena->memory_block->capacity = (initial_size + (alignment - 1)) & ~(alignment - 1);
@@ -91,7 +88,7 @@ void memory_arena_destroy(MemoryArena **const arena) {
 			break;
 		case COUNT:
 		default:
-			INVARIANT(0, "Memory arena tried to reset unexpected arena type");
+			INVARIANT(0, "Memory arena tried to destroy unexpected arena type");
 	}
 	free(*arena);
 	(*arena) = NULL;
@@ -137,7 +134,7 @@ void *memory_arena_alloc(MemoryArena **const arena, const size_t size) {
 			return pool_alloc(arena, size);
 		case COUNT:
 		default:
-			INVARIANT(0, "Memory arena tried to reset unexpected arena type");
+			INVARIANT(0, "Memory arena tried to allocate with unexpected arena type");
 	}
 	__builtin_unreachable();
 }
@@ -157,7 +154,7 @@ bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size) {
 			return pool_alloc_verify(arena, size);
 		case COUNT:
 		default:
-			INVARIANT(0, "");
+			INVARIANT(0, "Invalid allocator type for verification");
 	}
 	__builtin_unreachable();
 }

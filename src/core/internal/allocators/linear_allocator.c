@@ -28,7 +28,7 @@ void linear_reset(MemoryBlock *const memory) {
 }
 
 void *linear_alloc(MemoryArena **const arena, const size_t allocation_size) {
-	INVARIANT(arena && (*arena), "");
+	INVARIANT(arena && (*arena), "Cannot allocate from NULL arena pointer");
 	INVARIANT((*arena)->memory_block, "Cannot allocate memory from a null pointer");
 	INVARIANT((*arena)->memory_block->memory, "Cannot allocate memory from null pointer to memory");
 	INVARIANT(is_power_of_two((*arena)->alignment), "memory alignment on allocation must be a power of two");
@@ -56,7 +56,7 @@ void *linear_alloc(MemoryArena **const arena, const size_t allocation_size) {
 			INVARIANT(current_block->next, "System out of memory");
 
 			current_block->next->memory =
-			    safe_aligned_alloc((current_block->capacity << 1), alignment, "Malloc failed");
+			    safe_aligned_alloc((current_block->capacity << 1), alignment, "System out of memory");
 			current_block->next->allocated = 0;
 			current_block->next->capacity = (current_block->capacity << 1);
 			current_block->next->next = NULL;
