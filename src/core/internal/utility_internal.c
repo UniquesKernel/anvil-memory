@@ -7,6 +7,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#define LOG_FILE "/tmp/invariant_error.log"
+
 // In utility_internal.c
 void log_and_crash(const char *expr, const char *file, int line, const char *fmt, ...) {
 	// Get the current time
@@ -25,12 +27,11 @@ void log_and_crash(const char *expr, const char *file, int line, const char *fmt
 #ifdef LOG_FILE
 	FILE *log = fopen(LOG_FILE, "a");
 	if (log) {
-		fprintf(log, "[%s] INVARIANT failed: %s at %s:%d\nMessage: %s\n\n", time_buf, expr, file, line,
-		        message);
+		fprintf(log, "[%s] INVARIANT failed: %s at %s:%d\n%s\n\n", time_buf, expr, file, line, message);
 		fclose(log);
 	}
 #else
-	fprintf(stderr, "INVARIANT failed: %s at %s:%d\nMessage: %s\n", expr, file, line, message);
+	fprintf(stderr, "INVARIANT failed: %s at %s:%d\n%s\n", expr, file, line, message);
 #endif /* ifdef LOG_FILE */
 
 	abort();
