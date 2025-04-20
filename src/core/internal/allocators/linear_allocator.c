@@ -5,27 +5,30 @@
 #include "anvil/memory/internal/utility_internal.h"
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 
 /*****************************************************************************************************
  *					Linear Allocator
  * ***************************************************************************************************/
 
-void linear_free(MemoryBlock *const memory) {
-	INVARIANT(memory, ERR_NULL_POINTER, "memory");
+void linear_free(MemoryBlock *const memory_block) {
+	INVARIANT(memory_block, ERR_NULL_POINTER, "memory");
 
-	for (MemoryBlock *current = memory, *n; current && (n = current->next, 1); current = n) {
+	for (MemoryBlock *current = memory_block, *n; current && (n = current->next, 1); current = n) {
 		safe_aligned_free(current->memory);
 		free(current);
 	}
 }
 
-void linear_reset(MemoryBlock *const memory) {
-	INVARIANT(memory, ERR_NULL_POINTER, "memory");
-	memory->allocated = 0;
-	if (memory->next) {
-		linear_free(memory->next);
-		memory->next = NULL;
+void linear_reset(MemoryBlock *const memory_block) {
+	INVARIANT(memory_block, ERR_NULL_POINTER, "memory");
+
+	memset(memory_block->memory, 0x0, memory_block->allocated);
+	memory_block->allocated = 0;
+	if (memory_block->next) {
+		linear_free(memory_block->next);
+		memory_block->next = NULL;
 	}
 }
 

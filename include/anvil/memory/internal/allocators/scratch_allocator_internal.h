@@ -19,12 +19,12 @@
  * The function will CRASH (not return an error) if its invariants are violated:
  * - head memory block in the memory block chain is `NULL`.
  *
- * @param [out] `memory` Pointer to the head of the memory block chain to free.
+ * @param [out] `memory_block` Pointer to the head of the memory block chain to free.
  *
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
-void scratch_free(MemoryBlock *const memory);
+void scratch_free(MemoryBlock *const memory_block);
 
 /**
  * @brief Scratch memory reset strategy for memory allocator.
@@ -37,12 +37,12 @@ void scratch_free(MemoryBlock *const memory);
  * The function will CRASH (not return an error) if its invariants are violated:
  * - head memory block in the memory block chain is `NULL`.
  *
- * @param [out] `memory` Pointer to the head of the memory block chain to reset.
+ * @param [out] `memory_block` Pointer to the head of the memory block chain to reset.
  *
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
-void scratch_reset(MemoryBlock *const memory);
+void scratch_reset(MemoryBlock *const memory_block);
 
 /**
  * @brief Scratch memory allocation strategy for memory allocator.

@@ -6,6 +6,7 @@
 #include "anvil/memory/internal/utility_internal.h"
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 void pool_free(MemoryBlock *const memory_block) {
 	INVARIANT(memory_block, ERR_NULL_POINTER, "memory_block");
@@ -18,6 +19,8 @@ void pool_free(MemoryBlock *const memory_block) {
 
 void pool_reset(MemoryBlock *const memory_block) {
 	INVARIANT(memory_block, ERR_NULL_POINTER, "memory_block");
+
+	memset(memory_block->memory, 0x0, memory_block->allocated);
 	memory_block->allocated = 0;
 	if (memory_block->next) {
 		pool_free(memory_block->next);
