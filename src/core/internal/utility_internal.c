@@ -1,6 +1,7 @@
 #include "anvil/memory/internal/utility_internal.h"
 #include <assert.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +10,6 @@
 #include <time.h>
 #include <unistd.h>
 
-// In utility_internal.c
 void log_and_crash(const char *expr, const char *file, int line, const char *fmt, ...) {
 	// Get the current time
 	time_t now = time(NULL);

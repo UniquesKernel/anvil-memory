@@ -3,13 +3,13 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <sys/cdefs.h>
 
-// can be used together with functions like free, memory_arena_destroy etc. for
-// automatically invoking cleanup on scope exits.
-#define DEFER(clean_up_func) __attribute__((cleanup(clean_up_func)))
-#define likely(x)            __builtin_expect(!!(x), 1)
-#define unlikely(x)          __builtin_expect(!!(x), 0)
+#define DEFER(clean_up_func)  __attribute__((cleanup(clean_up_func)))
+#define likely(x)             __builtin_expect(!!(x), 1)
+#define unlikely(x)           __builtin_expect(!!(x), 0)
+#define MEMORY_POISON_PATTERN 0xDEADC0DE
 
 #define INVARIANT(expr, fmt, ...)                                                                                      \
 	do {                                                                                                           \
@@ -22,7 +22,7 @@
 inline void *debug_mmap(void *addr, size_t size, int __prod, __flags, __fd, __off_t __offset) {
 	void *result = mmap(addr, size, __prod, __flags, __fd, __off_t__offset);
 	if (result) {
-		memset(addr, 0xCC, size);
+		memset(addr, MEMOMEMORY_POISON_PATTERN, size);
 	}
 	return result;
 }
@@ -35,7 +35,7 @@ inline void *debug_mmap(void *addr, size_t size, int __prod, __flags, __fd, __of
  * @param[in] `expr` that failed.
  * @param[in] `file` filename for where a failure occured.
  * @param[in] `line` line that failed.
- * @param[in] `error_msg` error message to log.
+ * @param[in] `fmt`  formatted error message to log.
  * @param[in] ... formating arguments.
  */
 [[gnu::noreturn]]

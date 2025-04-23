@@ -1,13 +1,11 @@
 #include "anvil/memory/internal/allocation/memory_allocation_internal.h"
 #include "anvil/memory/internal/utility_internal.h"
-#include <anvil/memory/internal/error_templates.h>
+#include <anvil/memory/internal/error/error_templates.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
-
-#define MEMORY_POISON_PATTERN xDEADC0DE
 
 void *safe_aligned_alloc(size_t size, size_t alignment) {
 	INVARIANT(size != 0, ERR_ALLOC_SIZE_ZERO);

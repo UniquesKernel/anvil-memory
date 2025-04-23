@@ -2,7 +2,7 @@
 #include "anvil/memory/arena.h"
 #include "anvil/memory/internal/allocation/memory_allocation_internal.h"
 #include "anvil/memory/internal/arena_internal.h"
-#include "anvil/memory/internal/error_templates.h"
+#include "anvil/memory/internal/error/error_templates.h"
 #include "anvil/memory/internal/utility_internal.h"
 #include <stddef.h>
 #include <stdlib.h>
