@@ -103,8 +103,7 @@ void memory_arena_reset(MemoryArena **const arena);
  *       diagnostics rather than returning error codes.
  * @note This function is **NOT** thread safe and shouldn't be used in a concurrent context.
  */
-[[gnu::malloc, gnu::warn_unused_result]]
-void *memory_arena_alloc(MemoryArena **const arena, const size_t size);
+void *__attribute__((malloc, warn_unused_result)) memory_arena_alloc(MemoryArena **const arena, const size_t size);
 /**
  * @brief Evaluates if a memory arena has enough memory for an allocation
  *
@@ -122,8 +121,7 @@ void *memory_arena_alloc(MemoryArena **const arena, const size_t size);
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
-[[gnu::pure]]
-bool memory_arena_alloc_verify(MemoryArena *const arena, const size_t size);
+bool __attribute__((pure)) memory_arena_alloc_verify(MemoryArena *const arena, const size_t size);
 
 /**
  * @brief Records the current state of a stack memory arena.

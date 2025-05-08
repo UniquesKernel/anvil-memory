@@ -25,12 +25,12 @@
  * - capacity is larger than zero.
  * - memory points to a valid, aligned memory region.
  *
- * Fields      | Type              	| Size
- * ---         | ---               	| ---
- * memory      | void * 		| 4 or 8 Bytes
- * next        | struct MemoryBlock*	| 4 or 8 Bytes
- * capacity    | size_t            	| 4 or 8 Bytes
- * allocated   | size_t            	| 4 or 8 Bytes
+ * Fields      | Type                | Size
+ * ----------- | ------------------- | -------------
+ * memory      | void *              | 4 or 8 Bytes
+ * next        | struct MemoryBlock* | 4 or 8 Bytes
+ * capacity    | size_t              | 4 or 8 Bytes
+ * allocated   | size_t              | 4 or 8 Bytes
  */
 typedef struct MemoryBlock {
 	void *memory;                ///< Aligned memory pointer
@@ -45,11 +45,11 @@ typedef struct MemoryBlock {
  * Stores the top MemoryBlock and the allocation amount within that block at the
  * time the snapshot was taken, allowing the arena to be rolled back to this state.
  *
- * Fields      | Type                  	| Size
- * ---         | ---                   	| ---
- * top         | MemoryBlock * 		| 4 or 8 Bytes
- * allocated   | size_t                	| 4 or 8 Bytes
- * capacity    | size_t			| 4 or 8 Bytes
+ * Fields      | Type                | Size
+ * ----------- | ------------------- | -------------
+ * top         | MemoryBlock *       | 4 or 8 Bytes
+ * allocated   | size_t              | 4 or 8 Bytes
+ * capacity    | size_t              | 4 or 8 Bytes
  */
 typedef struct {
 	MemoryBlock *top;    ///< Pointer to the MemoryBlock that was active when the snapshot was taken.
@@ -68,9 +68,9 @@ static_assert(_Alignof(Snapshot) == _Alignof(MemoryBlock *), "Snapshot alignment
  * at least one member in a struct. This may be expanded in the future if the
  * Scratch allocator requires specific state tracking.
  *
- * Fields                                 	| Type | Size
- * ---                                    	| ---  | ---
- * _dummy_variable_to_comply_with_standards	| int  | 4 Bytes
+ * Fields                                  | Type | Size
+ * --------------------------------------- | ---- | ---------
+ * _dummy_variable_to_comply_with_standards| int  | 4 Bytes
  */
 typedef struct {
 	int _dummy_variable_to_comply_with_standards;    ///< Placeholder field.
@@ -88,9 +88,9 @@ static_assert(_Alignof(ScratchAllocatorState) == _Alignof(int),
  * at least one member in a struct. This may be expanded in the future if the
  * Linear allocator requires specific state tracking.
  *
- * Fields                                 	| Type | Size
- * ---                                    	| ---  | ---
- * _dummy_variable_to_comply_with_standards	| int  | 4 Bytes
+ * Fields                                  | Type | Size
+ * --------------------------------------- | ---- | ---------
+ * _dummy_variable_to_comply_with_standards| int  | 4 Bytes
  */
 typedef struct {
 	int _dummy_variable_to_comply_with_standards;    ///< Placeholder field.
@@ -108,11 +108,11 @@ static_assert(_Alignof(LinearAllocatorState) == _Alignof(int),
  * MemoryBlock being used for allocations. This allows for pushing and
  * popping allocation contexts.
  *
- * Fields      | Type                  	| Size
- * ---         | ---                   	| ---
- * snapshots   | Snapshot* 		| 4 or 8 Bytes
- * top         | MemoryBlock* 		| 4 or 8 Bytes
- * snapshot_count | size_t		| 4 or 8 Bytes
+ * Fields         | Type           | Size
+ * -------------- | -------------- | -------------
+ * snapshots      | Snapshot*      | 4 or 8 Bytes
+ * top            | MemoryBlock*   | 4 or 8 Bytes
+ * snapshot_count | size_t         | 4 or 8 Bytes
  */
 typedef struct {
 	Snapshot *snapshots;      ///< Pointer to an array or linked list of saved Snapshots.
@@ -143,7 +143,7 @@ static_assert(_Alignof(PoolAllocatorState) == _Alignof(size_t),
  * information for that allocator strategy (Scratch, Linear, or Stack).
  *
  * Fields                 | Type                  | Size
- * ---                    | ---                   | ---
+ * ---------------------- | --------------------- | -------------
  * scratchAllocatorState  | ScratchAllocatorState | 4 or 8 Bytes
  * linearAllocatorState   | LinearAllocatorState  | 4 or 8 Bytes
  * poolAllocatorState     | PoolAllocatorState    | 4 or 8 Bytes
@@ -174,12 +174,12 @@ static_assert(_Alignof(AllocatorState) == _Alignof(StackAllocatorState),
  * - memory_block points to the head of a valid (potentially single-element) MemoryBlock chain.
  * - allocator_type corresponds to a valid allocation strategy (SCRATCH, LINEAR, STACK).
  *
- * Fields           	| Type              	| Size
- * ---              	| ---               	| ---
- * allocator_type   	| AllocatorType     	| 4 or 8 Bytes
- * memory_block     	| MemoryBlock * 	| 4 or 8 Bytes
- * alignment        	| size_t            	| 4 or 8 Bytes
- * state		| AllocatorState	| 8 or 16 bytes
+ * Fields           | Type              | Size
+ * ---------------- | ----------------- | -------------
+ * allocator_type   | AllocatorType     | 4 or 8 Bytes
+ * memory_block     | MemoryBlock *     | 4 or 8 Bytes
+ * alignment        | size_t            | 4 or 8 Bytes
+ * state            | AllocatorState    | 8 or 16 bytes
  *
  * @note Memory Arenas created using this structure are **NOT** thread-safe.
  * External synchronization is required if used in concurrent environments.

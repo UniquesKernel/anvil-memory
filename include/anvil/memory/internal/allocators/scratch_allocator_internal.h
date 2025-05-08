@@ -1,3 +1,16 @@
+/**
+ * @file scratch_allocator_internal.h
+ * @brief Internal implementation of the Scratch Memory Allocator.
+ *
+ * This header defines the internal functions for the Scratch Allocator strategy, which
+ * provides a fixed-size memory arena for temporary allocations. Unlike other allocators,
+ * the Scratch allocator does not grow dynamically - if an allocation doesn't fit in the
+ * available space, it simply fails.
+ *
+ * The Scratch allocator is ideal for short-lived scratch space where memory requirements
+ * are well-known in advance and performance is critical.
+ */
+
 #ifndef ANVIL_MEMORY_SCRATCH_ALLOCATOR_INTERNAL_H
 #define ANVIL_MEMORY_SCRATCH_ALLOCATOR_INTERNAL_H
 
@@ -67,8 +80,7 @@ void scratch_reset(MemoryBlock *const memory_block);
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
-[[gnu::malloc, gnu::warn_unused_result]]
-void *scratch_alloc(MemoryArena **const arena, const size_t allocation_size);
+void *__attribute__((malloc, warn_unused_result)) scratch_alloc(MemoryArena **const arena, const size_t allocation_size);
 
 /**
  * @brief Scratch memory allocation test strategy.
@@ -88,7 +100,6 @@ void *scratch_alloc(MemoryArena **const arena, const size_t allocation_size);
  *
  * @return boolean value indicating if the arena has sufficient available space for the allocation.
  */
-[[gnu::pure]]
-bool scratch_alloc_verify(MemoryArena *const arena, const size_t allocation_size);
+bool __attribute__((pure)) scratch_alloc_verify(MemoryArena *const arena, const size_t allocation_size);
 
 #endif    // !MEMORY_ARENA_SCRATCH_ALLOCATOR_INTERNAL_H

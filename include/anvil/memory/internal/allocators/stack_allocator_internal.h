@@ -1,3 +1,16 @@
+/**
+ * @file stack_allocator_internal.h
+ * @brief Internal implementation of the Stack Memory Allocator.
+ *
+ * This header defines the internal functions for the Stack Allocator strategy, which
+ * follows a last-in-first-out (LIFO) memory management approach. It allows recording
+ * allocation states and unwinding to previous states, making it ideal for nested
+ * temporary allocations or scope-based memory management.
+ *
+ * The Stack allocator supports dynamic growth by allocating new blocks when needed,
+ * and provides snapshots to allow efficient rollback to previous memory states.
+ */
+
 #ifndef ANVIL_MEMORY_STACK_ALLOCATOR_INTERNAL_H
 #define ANVIL_MEMORY_STACK_ALLOCATOR_INTERNAL_H
 
@@ -72,8 +85,8 @@ void stack_reset(MemoryBlock *const memory_block);
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
-[[gnu::malloc, gnu::warn_unused_result]]
-void *stack_alloc(MemoryBlock **const memory_block, const size_t allocation_size, const size_t alignment);
+void *__attribute__((malloc, warn_unused_result)) stack_alloc(MemoryBlock **const memory_block,
+                                                              const size_t allocation_size, const size_t alignment);
 
 /**
  * @brief Stack memory allocation test strategy.

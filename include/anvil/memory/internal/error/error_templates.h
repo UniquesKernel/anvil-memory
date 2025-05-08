@@ -1,4 +1,22 @@
-// error_templates.h
+/**
+ * @file error_templates.h
+ * @brief Error message templates for the Anvil Memory system.
+ *
+ * This header defines standardized error messages and codes used throughout
+ * the Anvil Memory library. The error codes follow a structured format (EXYZ)
+ * where X represents the category, Y the subcategory, and Z the specific error.
+ *
+ * Categories:
+ * - E1xx: Memory allocation errors
+ * - E2xx: Pointer validation errors
+ * - E3xx: Value range errors
+ * - E4xx: Arena errors
+ * - E5xx: State errors
+ *
+ * These error templates are used with the INVARIANT macro to provide
+ * consistent and informative error messages when invariants are violated.
+ */
+
 #ifndef ERROR_TEMPLATES_H
 #define ERROR_TEMPLATES_H
 

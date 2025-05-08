@@ -1,3 +1,14 @@
+/**
+ * @file linear_allocator_internal.h
+ * @brief Internal implementation of the Linear Memory Allocator.
+ *
+ * This header defines the internal functions for the Linear Allocator strategy, which
+ * allocates memory blocks sequentially and only allows freeing all blocks at once.
+ * Unlike the Scratch allocator, the Linear allocator can dynamically grow by allocating
+ * new blocks when needed. This makes it suitable for situations where the total memory
+ * requirement isn't known in advance.
+ */
+
 #ifndef ANVIL_MEMORY_ALLOCATOR_linear_INTERL_H
 #define ANVIL_MEMORY_ALLOCATOR_linear_INTERL_H
 
@@ -67,8 +78,7 @@ void linear_reset(MemoryBlock *const memory_block);
  * @note This function follows fail-fast design - programmer errors trigger immediate crashes with
  *       diagnostics rather than returning error codes.
  */
-[[gnu::malloc, gnu::warn_unused_result]]
-void *linear_alloc(MemoryArena **const arena, const size_t allocation_size);
+void *__attribute__((malloc, warn_unused_result)) linear_alloc(MemoryArena **const arena, const size_t allocation_size);
 
 /**
  * @brief Linear memory allocation verification function.
@@ -88,7 +98,6 @@ void *linear_alloc(MemoryArena **const arena, const size_t allocation_size);
  * @return Always returns true for the linear allocator, as it can dynamically grow
  *         by allocating new blocks when needed.
  */
-[[gnu::pure]]
-bool linear_alloc_verify(MemoryArena *const arena, const size_t allocation_size);
+bool __attribute__((pure)) linear_alloc_verify(MemoryArena *const arena, const size_t allocation_size);
 
 #endif    // ANVIL_MEMORY_ALLOCATOR_linear_INTERL_H
